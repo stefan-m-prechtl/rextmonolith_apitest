@@ -1,0 +1,46 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    jcenter()
+}
+
+ext {
+	junitVersion = '5.4.1'
+	jerseyVersion = '2.27'
+	jsonVersion = '1.1.4'	
+	assertjVersion = '3.12.2'
+}
+
+dependencies {
+
+	testImplementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+
+
+	// JUnit5-Testing
+	testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+	// Erweiterung: siehe http://joel-costigliola.github.io/assertj/assertj-core-quick-start.html
+	testImplementation group: 'org.assertj', name: 'assertj-core', version: "${assertjVersion}"
+	
+	// REST Client Jersey
+	// ohne Activation: Warnungen!!
+	testImplementation group: 'javax.activation', name: 'activation', version: '1.1.1'
+	testImplementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
+	testImplementation group: 'org.glassfish', name: 'javax.json', version: "${jsonVersion}"
+	// ohne Injection: Fehler zur Laufzeit!
+	testImplementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jerseyVersion}"
+	
+	testImplementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+	testImplementation group: 'javax.json', name: 'javax.json-api', version: '1.1'
+}
+
+test {
+    useJUnitPlatform()
+}
