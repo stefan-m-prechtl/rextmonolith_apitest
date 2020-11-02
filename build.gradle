@@ -12,7 +12,7 @@ repositories {
 }
 
 ext {
-	junitVersion = '5.4.1'
+	junitVersion = '5.6.2'
 	jerseyVersion = '2.27'
 	jsonVersion = '1.1.4'	
 	assertjVersion = '3.12.2'
@@ -31,14 +31,14 @@ dependencies {
 	
 	// REST Client Jersey
 	// ohne Activation: Warnungen!!
-	testImplementation group: 'javax.activation', name: 'activation', version: '1.1.1'
-	testImplementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
-	testImplementation group: 'org.glassfish', name: 'javax.json', version: "${jsonVersion}"
+	implementation group: 'javax.activation', name: 'activation', version: '1.1.1'
+	implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
+	implementation group: 'org.glassfish', name: 'javax.json', version: "${jsonVersion}"
 	// ohne Injection: Fehler zur Laufzeit!
-	testImplementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jerseyVersion}"
+	implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jerseyVersion}"
 	
-	testImplementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
-	testImplementation group: 'javax.json', name: 'javax.json-api', version: '1.1'
+	implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
+	implementation group: 'javax.json', name: 'javax.json-api', version: '1.1'
 }
 
 test {
