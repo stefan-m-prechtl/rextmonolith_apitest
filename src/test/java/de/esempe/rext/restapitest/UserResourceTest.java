@@ -3,13 +3,9 @@ package de.esempe.rext.restapitest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import java.util.UUID;
-
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonPatchBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -32,7 +28,7 @@ class UserResourceTest extends AbstractResourceTest
 
 	final static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
 
-	// Echte User-ID vom ersten User aus GET-Abruf
+	// Echte User-ID vom ersten User aus GET-Abruf - wird für weitere Aufrufe benötigt
 	static String realUserID;
 
 	@BeforeAll
@@ -60,15 +56,14 @@ class UserResourceTest extends AbstractResourceTest
 	{
 		super.headResource();
 	}
-	
-	@Test	
+
+	@Test
 	@Order(30)
 	@DisplayName("Befehl 'HTTP DELETE ' für: " + baseURL + "?flag=all")
 	void deleteAllUsers()
 	{
 		super.deleteAllResource();
 	}
-
 
 	@Test
 	@Order(35)
@@ -82,7 +77,6 @@ class UserResourceTest extends AbstractResourceTest
 		super.postResource(jsonUser, baseURL);
 	}
 
-
 	@Test
 	@Order(40)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL)
@@ -90,7 +84,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getUsers()
 	{
-		JsonObject jsonUser = super.getResource();
+		final JsonObject jsonUser = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -113,7 +107,7 @@ class UserResourceTest extends AbstractResourceTest
 	void optionUsersId()
 	{
 		super.optionResourceId(UserResourceTest.realUserID);
-		
+
 	}
 
 	@Test
@@ -133,24 +127,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getUsersId()
 	{
-		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UserResourceTest.realUserID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'head",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
-				);
-		//@formatter:on
-
-		final String jsonString = res.readEntity(String.class);
-		assertThat(jsonString).isNotBlank();
-		final JsonObject jsonUser = this.getJsonObjectFromString(jsonString);
-		assertThat(jsonUser).isNotNull();
+		final JsonObject jsonUser = super.getResourceId(UserResourceTest.realUserID);
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -174,20 +151,10 @@ class UserResourceTest extends AbstractResourceTest
 		JsonObject jsonUserBeforeUpdate = this.getResourceById(UserResourceTest.realUserID);
 		final JsonPatchBuilder builder = Json.createPatchBuilder();
 		jsonUserBeforeUpdate = builder.replace("/firstname", "Etienne").build().apply(jsonUserBeforeUpdate);
+		// act & assert
+		super.putResourceId(UserResourceTest.realUserID, jsonUserBeforeUpdate);
 
-		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UserResourceTest.realUserID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.put(Entity.json(jsonUserBeforeUpdate.toString()));
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'put",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
-				);
-		//@formatter:on
 	}
-
 
 	@Test
 	@Order(90)
@@ -229,16 +196,7 @@ class UserResourceTest extends AbstractResourceTest
 		final String objId = resObj.getString("userid");
 
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", objId).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'delete",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
-				);
-		//@formatter:on
+		super.deleteResourceIdWithExistingResource(objId);
 	}
 
 	@Test
@@ -246,18 +204,10 @@ class UserResourceTest extends AbstractResourceTest
 	@DisplayName("Befehl 'HTTP DELETE' für: " + baseURL + "/id")
 	void deleteUsersIdWithNonExistingUser()
 	{
-		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UUID.randomUUID().toString()).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'delete",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(404)
-				);
-		//@formatter:on
+		super.deleteResourceIdWithNonExistingResource();
 	}
+
+	// ****************** Helper-Methoden **********************************************
 
 	private JsonObject createNewUser(final String login, final String firstname, final String lastname)
 	{

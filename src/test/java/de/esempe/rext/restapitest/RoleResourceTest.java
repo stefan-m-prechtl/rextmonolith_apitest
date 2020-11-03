@@ -308,5 +308,4 @@ public class RoleResourceTest extends AbstractResourceTest
 		//@formatter:on
 		return result;
 	}
-
 }

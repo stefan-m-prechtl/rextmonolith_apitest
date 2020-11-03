@@ -32,4 +32,5 @@ class PingResourceTest extends AbstractResourceTest
 		assertThat(res).isNotNull();
 		assertThat(res.getStatus()).isEqualTo(200);
 	}
+
 }
