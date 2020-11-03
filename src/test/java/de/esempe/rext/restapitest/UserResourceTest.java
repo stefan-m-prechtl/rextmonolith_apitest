@@ -43,137 +43,54 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(10)
-	@DisplayName(" Befehl 'HTTP OPTION' für: " + baseURL)
+	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL)
 	// HTTP OPTION ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void optionUsers()
 	{
-		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.options();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'option",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("allow")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("allow")).contains("HEAD"),
-				() -> assertThat(res.getHeaderString("allow")).contains("GET"),
-				() -> assertThat(res.getHeaderString("allow")).contains("OPTIONS")
-				);
-		//@formatter:on
+		super.optionResource();
 	}
 
 	@Test
 	@Order(20)
-	@DisplayName(" Befehl 'HTTP HEAD' für: " + baseURL)
+	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL)
 	// HTTP HEAD ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void headUsers()
 	{
-		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.head();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'head",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
-				);
-		//@formatter:on
+		super.headResource();
 	}
-	@Test
+	
+	@Test	
 	@Order(30)
-	@DisplayName(" Befehl 'HTTP DELETE ' für: " + baseURL + "?flag=all")
+	@DisplayName("Befehl 'HTTP DELETE ' für: " + baseURL + "?flag=all")
 	void deleteAllUsers()
 	{
-
-		// act
-		invocationBuilder = target.queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
-
-		/// assert
-		//@formatter:off
-		assertAll("Result of 'delete",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
-				);
-		//@formatter:on
+		super.deleteAllResource();
 	}
 
 
 	@Test
 	@Order(35)
-	@DisplayName(" Befehl 'HTTP POST' für: " + baseURL)
+	@DisplayName("Befehl 'HTTP POST' für: " + baseURL)
 	void postUser()
 	{
 		// prepare
 		final JsonObject jsonUser = this.createNewUser("EMU", "Eva", "Mustermann");
 
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.post(Entity.json(jsonUser.toString()));
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'post",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
-				);
-		//@formatter:on
-
-		// "link" -->
-		// "<http://localhost:8080/user_mgmt/rest/users/cfb1be3b-da31-4f09-8aae-27b0f92707e1>;
-		// rel="self";
-		// type="application/json"
-		final String link = res.getHeaderString("link");
-
-		//@formatter:off
-		assertAll("Verify link",
-				() -> assertThat(link).isNotBlank(),
-				() -> assertThat(link).contains(baseURL),
-				() -> assertThat(link).contains("rel=\"self\""),
-				() -> assertThat(link).contains("type=\"application/json\"")
-				);
-		//@formatter:on
-
+		super.postResource(jsonUser, baseURL);
 	}
 
 
 	@Test
 	@Order(40)
-	@DisplayName(" Befehl 'HTTP GET' für: " + baseURL)
+	@DisplayName("Befehl 'HTTP GET' für: " + baseURL)
 	// HTTP GET ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getUsers()
 	{
-		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
-
-		// System.out.println(res.readEntity(String.class));
-
-		// assert
-		//@formatter:off
-		assertAll("Verify meta data",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
-				);
-		//@formatter:on
-
-		final String jsonString = res.readEntity(String.class);
-		assertThat(jsonString).isNotBlank();
-		final JsonArray jsonArray = this.getJsonArrrayFromString(jsonString);
-		assertThat(jsonArray).isNotNull();
-		assertThat(jsonArray.size()).isGreaterThan(0);
-		final JsonObject jsonUser = jsonArray.getJsonObject(0);
-		assertThat(jsonUser).isNotNull();
+		JsonObject jsonUser = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -190,55 +107,28 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(50)
-	@DisplayName(" Befehl 'HTTP OPTION' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL + "/id")
 	// HTTP OPTION ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void optionUsersId()
 	{
-		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UserResourceTest.realUserID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.options();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'option",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("allow")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("allow")).contains("HEAD"),
-				() -> assertThat(res.getHeaderString("allow")).contains("GET"),
-				() -> assertThat(res.getHeaderString("allow")).contains("PUT"),
-				() -> assertThat(res.getHeaderString("allow")).contains("DELETE"),
-				() -> assertThat(res.getHeaderString("allow")).contains("OPTIONS")
-				);
-		//@formatter:on
+		super.optionResourceId(UserResourceTest.realUserID);
+		
 	}
 
 	@Test
 	@Order(60)
-	@DisplayName(" Befehl 'HTTP HEAD' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL + "/id")
 	// HTTP HEAD ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void headUsersId()
 	{
-		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UserResourceTest.realUserID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.head();
-
-		// assert
-		//@formatter:off
-		assertAll("Result of 'head",
-				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
-				);
-		//@formatter:on
+		super.headResourceId(UserResourceTest.realUserID);
 	}
 
 	@Test
 	@Order(70)
-	@DisplayName(" Befehl 'HTTP GET' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/id")
 	// HTTP GET ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getUsersId()
@@ -275,7 +165,7 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(80)
-	@DisplayName(" Befehl 'HTTP PUT' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP PUT' für: " + baseURL + "/id")
 	// HTTP PUT ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void putUsersId()
@@ -301,7 +191,7 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(90)
-	@DisplayName(" Befehl 'HTTP GET' für: " + baseURL + "/search")
+	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/search")
 	// HTTP GET ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getUsersSearch()
@@ -329,7 +219,7 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(100)
-	@DisplayName(" Befehl 'HTTP DELETE' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP DELETE' für: " + baseURL + "/id")
 	void deleteUsersIdWithExistingUser()
 	{
 		// prepare: get object id from "posted" user from previous test
@@ -353,7 +243,7 @@ class UserResourceTest extends AbstractResourceTest
 
 	@Test
 	@Order(110)
-	@DisplayName(" Befehl 'HTTP DELETE' für: " + baseURL + "/id")
+	@DisplayName("Befehl 'HTTP DELETE' für: " + baseURL + "/id")
 	void deleteUsersIdWithNonExistingUser()
 	{
 		// act
