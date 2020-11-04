@@ -9,6 +9,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -16,47 +17,89 @@ public class Main
 {
 	private Client client;
 
-	private Invocation.Builder invocationBuilder;
-
 	public static void main(String[] args)
 	{
 		final Main theApp = new Main();
 		theApp.run();
 	}
 
+	public record PostResult(final int status, final String objid)
+	{
+	}
+
 	public void run()
 	{
 		this.client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.SECONDS).build();
 
-		System.out.println(this.ping());
-		System.out.println(this.createUser("SMP2", "'Stefan Maria", "Prechtl"));
+		// WS-Verfügbarkeit prüfen
+		if (this.ping() != 200)
+		{
+			return;
+		}
+
+		// Alle Daten löschen
+		this.deleteAllProjects();
+		this.deleteAllUsers();
+
+		// Benutzer anlegen
+		final var iduser01 = this.createUser("SMP", "Stefan M.", "Prechtl");
+		final var iduser02 = this.createUser("PRS", "Stefan", "Prechtl");
+		final var iduser03 = this.createUser("WEY", "Thomas", "Weyrath");
+
+		// Projekt anlegen
+		final var idproj01 = this.createProject("TST", "Testprojekt 1", iduser01.objid());
 
 		this.client.close();
 	}
 
+	// #### Ping
+
 	private int ping()
 	{
 		final String baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
-		this.invocationBuilder = this.createBuilder(baseURL);
-		final Response res = this.invocationBuilder.get();
+		final var invocationBuilder = this.createBuilder(baseURL);
+		final Response res = invocationBuilder.get();
 
 		return res.getStatus();
 
 	}
 
+	// ********** Löschen **********
+	int deleteAllUsers()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/usermgmt/users");
+	}
 
-	private int createUser(final String login, final String firstname, final String lastname)
+	int deleteAllProjects()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/projectmgmt/projects");
+	}
+
+	int deleteAllResource(String url)
+	{
+		final var invocationBuilder = this.client.target(url).queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
+		final Response res = invocationBuilder.delete();
+		return res.getStatus();
+	}
+
+	// ********** Benutzer **********
+
+	private PostResult createUser(final String login, final String firstname, final String lastname)
 	{
 		final String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
-		this.invocationBuilder = this.createBuilder(baseURL);
+		final var invocationBuilder = this.createBuilder(baseURL);
 
 		final JsonObject jsonUser = this.createNewUser(login, firstname, lastname);
-		final Response res = this.invocationBuilder.post(Entity.json(jsonUser.toString()));
+		final Response res = invocationBuilder.post(Entity.json(jsonUser.toString()));
 
-		return res.getStatus();
+		final Link selfLink = res.getLink("self");
+		final var uri = selfLink.getUri().getPath();
+		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
+		final int status = res.getStatus();
+
+		return new PostResult(status, objid);
 
 	}
-
 
 	private JsonObject createNewUser(final String login, final String firstname, final String lastname)
 	{
@@ -71,10 +114,42 @@ public class Main
 		return result;
 	}
 
+	// ********** Projekte **********
+	private PostResult createProject(final String projectname, final String description, final String userId)
+	{
+		final String baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
+		final var invocationBuilder = this.createBuilder(baseURL);
+
+		final JsonObject jsonProject = this.createNewProject(projectname, description, userId);
+		final Response res = invocationBuilder.post(Entity.json(jsonProject.toString()));
+
+		final Link selfLink = res.getLink("self");
+		final var uri = selfLink.getUri().getPath();
+		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
+		final int status = res.getStatus();
+
+		return new PostResult(status, objid);
+
+	}
+
+	private JsonObject createNewProject(final String projectname, final String description, final String userId)
+	{
+		//@formatter:off
+		final JsonObject result = Json.createObjectBuilder()
+				.add("projectname", projectname)
+				.add("description", description)
+				.add("owner", userId)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	// ********** Helper **********
+
 	private Invocation.Builder createBuilder(String baseURL)
 	{
 		final WebTarget target = this.client.target(baseURL);
-		final Invocation.Builder result  = target.request(MediaType.APPLICATION_JSON);
+		final Invocation.Builder result = target.request(MediaType.APPLICATION_JSON);
 
 		return result;
 
