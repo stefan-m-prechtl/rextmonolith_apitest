@@ -8,10 +8,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class Main
 {
@@ -19,13 +16,13 @@ public class Main
 
 	public static void main(String[] args)
 	{
-		final Main theApp = new Main();
+		final var theApp = new Main();
 		theApp.run();
 	}
 
-	public record PostResult(final int status, final String objid)
-	{
-	}
+	//@formatter:off
+	@SuppressWarnings("preview") public record PostResult(int status, String objid){}
+	//@formatter:on
 
 	public void run()
 	{
@@ -56,9 +53,9 @@ public class Main
 
 	private int ping()
 	{
-		final String baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
+		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
 		final var invocationBuilder = this.createBuilder(baseURL);
-		final Response res = invocationBuilder.get();
+		final var res = invocationBuilder.get();
 
 		return res.getStatus();
 
@@ -78,7 +75,7 @@ public class Main
 	int deleteAllResource(String url)
 	{
 		final var invocationBuilder = this.client.target(url).queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
+		final var res = invocationBuilder.delete();
 		return res.getStatus();
 	}
 
@@ -86,16 +83,16 @@ public class Main
 
 	private PostResult createUser(final String login, final String firstname, final String lastname)
 	{
-		final String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
+		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
 		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final JsonObject jsonUser = this.createNewUser(login, firstname, lastname);
-		final Response res = invocationBuilder.post(Entity.json(jsonUser.toString()));
+		final var jsonUser = this.createNewUser(login, firstname, lastname);
+		final var res = invocationBuilder.post(Entity.json(jsonUser.toString()));
 
-		final Link selfLink = res.getLink("self");
+		final var selfLink = res.getLink("self");
 		final var uri = selfLink.getUri().getPath();
 		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final int status = res.getStatus();
+		final var status = res.getStatus();
 
 		return new PostResult(status, objid);
 
@@ -104,7 +101,7 @@ public class Main
 	private JsonObject createNewUser(final String login, final String firstname, final String lastname)
 	{
 		//@formatter:off
-		final JsonObject result = Json.createObjectBuilder()
+		final var result = Json.createObjectBuilder()
 				//.add(field_id, user.getObjid().toString())
 				.add("userlogin", login)
 				.add("firstname", firstname)
@@ -117,16 +114,16 @@ public class Main
 	// ********** Projekte **********
 	private PostResult createProject(final String projectname, final String description, final String userId)
 	{
-		final String baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
+		final var baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
 		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final JsonObject jsonProject = this.createNewProject(projectname, description, userId);
-		final Response res = invocationBuilder.post(Entity.json(jsonProject.toString()));
+		final var jsonProject = this.createNewProject(projectname, description, userId);
+		final var res = invocationBuilder.post(Entity.json(jsonProject.toString()));
 
-		final Link selfLink = res.getLink("self");
+		final var selfLink = res.getLink("self");
 		final var uri = selfLink.getUri().getPath();
 		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final int status = res.getStatus();
+		final var status = res.getStatus();
 
 		return new PostResult(status, objid);
 
@@ -135,7 +132,7 @@ public class Main
 	private JsonObject createNewProject(final String projectname, final String description, final String userId)
 	{
 		//@formatter:off
-		final JsonObject result = Json.createObjectBuilder()
+		final var result = Json.createObjectBuilder()
 				.add("projectname", projectname)
 				.add("description", description)
 				.add("owner", userId)
@@ -148,8 +145,8 @@ public class Main
 
 	private Invocation.Builder createBuilder(String baseURL)
 	{
-		final WebTarget target = this.client.target(baseURL);
-		final Invocation.Builder result = target.request(MediaType.APPLICATION_JSON);
+		final var target = this.client.target(baseURL);
+		final var result = target.request(MediaType.APPLICATION_JSON);
 
 		return result;
 

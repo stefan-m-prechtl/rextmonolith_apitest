@@ -193,7 +193,7 @@ class UserResourceTest extends AbstractResourceTest
 		invocationBuilder = target.path("/search").queryParam("login", "EMU").request(MediaType.APPLICATION_JSON);
 		final Response resSearch = invocationBuilder.get();
 		final JsonObject resObj = this.createFromString(resSearch.readEntity(String.class));
-		final String objId = resObj.getString("userid");
+		final String objId = resObj.getString(field_id);
 
 		// act
 		super.deleteResourceIdWithExistingResource(objId);
