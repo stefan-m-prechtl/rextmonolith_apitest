@@ -18,6 +18,7 @@ public class Main
 	{
 		final var theApp = new Main();
 		theApp.run();
+		System.out.println("REST-Daten erzeugt!");
 	}
 
 	//@formatter:off
@@ -36,24 +37,28 @@ public class Main
 
 		// Alle Daten löschen
 		this.deleteAllItems();
+		this.deleteAllPriorities();
 		this.deleteAllProjects();
 		this.deleteAllUsers();
 
 		// Benutzer anlegen
-		final var iduser01 = this.createUser("SMP", "Stefan M.", "Prechtl");
-		final var iduser02 = this.createUser("PRS", "Stefan", "Prechtl");
-		final var iduser03 = this.createUser("WEY", "Thomas", "Weyrath");
+		final var iduser01 = this.postUser("SMP", "Stefan M.", "Prechtl");
+		final var iduser02 = this.postUser("PRS", "Stefan", "Prechtl");
+		final var iduser03 = this.postUser("EMU", "Eva", "Mustermann");
 
 		// Projekt anlegen
-		final var idproj01 = this.createProject("TST", "Testprojekt 1", iduser01.objid());
+		final var idproj01 = this.postProject("TST", "Testprojekt 1", iduser01.objid());
 
 		// Prioritäten anlegen
-		final var prio01 = this.createPriority("Hoch", 75);
+		final var prio01 = this.postPriority("Hoch", "Sehr wichtig!", 75);
+		final var jsonPrio01 = this.createJsonPriorityWithPrio(prio01.objid, "Hoch", "Sehr wichtig!", 75);
+		final var prio02 = this.postPriority("Niedrig", "Unwichtig!", 25);
+		final var jsonPrio02 = this.createJsonPriorityWithPrio(prio02.objid, "Niedrig", "Unwichtig!", 25);
 
 		// Items anlegen
-		final var item01 = this.createItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1");
-		final var item02 = this.createItem(idproj01.objid, iduser02.objid, "Item 2", "Content of 2");
-		final var item03 = this.createItem(idproj01.objid, iduser02.objid, "Item 3", "Content of 3");
+		final var item01 = this.postItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1", jsonPrio01);
+		final var item02 = this.postItem(idproj01.objid, iduser02.objid, "Item 2", "Content of 2", jsonPrio02);
+		final var item03 = this.postItem(idproj01.objid, iduser02.objid, "Item 3", "Content of 3", jsonPrio01);
 
 		this.client.close();
 	}
@@ -76,6 +81,11 @@ public class Main
 		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/items");
 	}
 
+	int deleteAllPriorities()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/priorities");
+	}
+
 	int deleteAllUsers()
 	{
 		return this.deleteAllResource("http://localhost:8080/monolith/rext/usermgmt/users");
@@ -95,7 +105,7 @@ public class Main
 
 	// ********** Benutzer **********
 
-	private PostResult createUser(final String login, final String firstname, final String lastname)
+	private PostResult postUser(final String login, final String firstname, final String lastname)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
 		final var invocationBuilder = this.createBuilder(baseURL);
@@ -126,7 +136,7 @@ public class Main
 	}
 
 	// ********** Projekte **********
-	private PostResult createProject(final String projectname, final String description, final String userId)
+	private PostResult postProject(final String projectname, final String description, final String userId)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
 		final var invocationBuilder = this.createBuilder(baseURL);
@@ -156,13 +166,13 @@ public class Main
 	}
 
 	// ********** Items **********
-	private PostResult createItem(final String projectId, final String creatorId, final String title, final String content)
+	private PostResult postItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
 		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final var jsonProject = this.createJsonItem(projectId, creatorId, title, content);
-		final var res = invocationBuilder.post(Entity.json(jsonProject.toString()));
+		final var jsonItem = this.createJsonItem(projectId, creatorId, title, content, jsonPrio);
+		final var res = invocationBuilder.post(Entity.json(jsonItem.toString()));
 
 		final var selfLink = res.getLink("self");
 		final var uri = selfLink.getUri().getPath();
@@ -173,7 +183,7 @@ public class Main
 
 	}
 
-	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content)
+	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio)
 	{
 
 		//@formatter:off
@@ -182,18 +192,19 @@ public class Main
 				.add("content", content)
 				.add("projektobjid", projectId)
 				.add("creatorobjid", creatorId)
+				.add("priority", jsonPrio)
 				.build();
 		//@formatter:on
 		return result;
 	}
 
 	// ********** Priorities **********
-	private PostResult createPriority(final String caption, int value)
+	private PostResult postPriority(final String name, final String description, int value)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/itemmgmt/priorities";
 		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final var jsonObj = this.createJsonPriority(caption, value);
+		final var jsonObj = this.createJsonPriority(name, description, value);
 		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
 
 		final var selfLink = res.getLink("self");
@@ -205,11 +216,25 @@ public class Main
 
 	}
 
-	private JsonObject createJsonPriority(final String caption, final int value)
+	private JsonObject createJsonPriority(final String name, String description, final int value)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
-				.add("caption", caption)
+				.add("name", name)
+				.add("description", description)
+				.add("value", value)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonObject createJsonPriorityWithPrio(final String objId, final String name, String description, final int value)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("priorityid", objId)
+				.add("name", name)
+				.add("description", description)
 				.add("value", value)
 				.build();
 		//@formatter:on
