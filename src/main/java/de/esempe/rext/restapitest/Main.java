@@ -22,7 +22,7 @@ public class Main
 	}
 
 	//@formatter:off
-	@SuppressWarnings("preview") public record PostResult(final int status, final String objid){}
+	@SuppressWarnings("preview") public record PostResult(int status, String objid){}
 	//@formatter:on
 
 	public void run()
@@ -105,7 +105,7 @@ public class Main
 
 	// ********** Benutzer **********
 
-	private PostResult postUser(final String login, final String firstname, final String lastname)
+	private PostResult postUser(String login, String firstname, String lastname)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
 		final var invocationBuilder = this.createBuilder(baseURL);
@@ -136,7 +136,7 @@ public class Main
 	}
 
 	// ********** Projekte **********
-	private PostResult postProject(final String projectname, final String description, final String userId)
+	private PostResult postProject(String projectname, String description, String userId)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
 		final var invocationBuilder = this.createBuilder(baseURL);
