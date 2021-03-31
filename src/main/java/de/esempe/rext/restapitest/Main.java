@@ -36,6 +36,7 @@ public class Main
 		}
 
 		// Alle Daten löschen
+		this.deleteAllStatus();
 		this.deleteAllItems();
 		this.deleteAllPriorities();
 		this.deleteAllProjects();
@@ -60,6 +61,12 @@ public class Main
 		final var item02 = this.postItem(idproj01.objid, iduser02.objid, "Item 2", "Content of 2", jsonPrio02);
 		final var item03 = this.postItem(idproj01.objid, iduser02.objid, "Item 3", "Content of 3", jsonPrio01);
 
+		// *** Workflow ***
+		// Status anlegen
+		final var status01 = this.postState("Erstellt", "Erstellt");
+		final var status02 = this.postState("InBearbeitung", "In Bearbeitung");
+		final var status03 = this.postState("Abgeschlossen", "Abgeschlossen");
+
 		this.client.close();
 	}
 
@@ -76,6 +83,11 @@ public class Main
 	}
 
 	// ********** Löschen **********
+	int deleteAllStatus()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/status");
+	}
+
 	int deleteAllItems()
 	{
 		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/items");
@@ -236,6 +248,35 @@ public class Main
 				.add("name", name)
 				.add("description", description)
 				.add("value", value)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	// ********** State **********
+	private PostResult postState(final String name, final String description)
+	{
+		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/status";
+		final var invocationBuilder = this.createBuilder(baseURL);
+
+		final var jsonObj = this.createJsonStatus(name, description);
+		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
+
+		final var status = res.getStatus();
+		final var selfLink = res.getLink("self");
+		final var uri = selfLink.getUri().getPath();
+		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
+
+		return new PostResult(status, objid);
+
+	}
+
+	private JsonObject createJsonStatus(final String name, String description)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("name", name)
+				.add("description", description)
 				.build();
 		//@formatter:on
 		return result;
