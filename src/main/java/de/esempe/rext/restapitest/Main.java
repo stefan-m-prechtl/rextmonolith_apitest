@@ -22,7 +22,7 @@ public class Main
 	}
 
 	//@formatter:off
-	@SuppressWarnings("preview") public record PostResult(int status, String objid){}
+	public record PostResult(int status, String objid){}
 	//@formatter:on
 
 	public void run()

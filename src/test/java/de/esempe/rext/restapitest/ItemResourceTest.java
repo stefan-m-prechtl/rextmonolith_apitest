@@ -38,6 +38,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	static void setUpBeforeClass() throws Exception
 	{
 		target = client.target(baseURL);
+
 	}
 
 	@Test
@@ -76,7 +77,7 @@ public class ItemResourceTest extends AbstractResourceTest
 		// prepare
 		final var projectId = UUID.randomUUID().toString();
 		final var creatorId = UUID.randomUUID().toString();
-		final JsonObject jsonItem = this.createNewItem("Tests ertellen", "Weiter Unit-Tests schreiben", projectId, creatorId);
+		final var jsonItem = this.createNewItem("Tests ertellen", "Weiter Unit-Tests schreiben", projectId, creatorId);
 
 		// act
 		super.postResource(jsonItem, baseURL);
@@ -89,7 +90,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getItems()
 	{
-		final JsonObject jsonItem = super.getResource();
+		final var jsonItem = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -133,7 +134,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getItemsId()
 	{
-		final JsonObject jsonItem = super.getResourceId(ItemResourceTest.realItemID);
+		final var jsonItem = super.getResourceId(ItemResourceTest.realItemID);
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -155,8 +156,8 @@ public class ItemResourceTest extends AbstractResourceTest
 	void putItemsId()
 	{
 		// prepare
-		JsonObject jsonItemBeforeUpdate = this.getResourceById(ItemResourceTest.realItemID);
-		final JsonPatchBuilder builder = Json.createPatchBuilder();
+		var jsonItemBeforeUpdate = this.getResourceById(ItemResourceTest.realItemID);
+		final var builder = Json.createPatchBuilder();
 		jsonItemBeforeUpdate = builder.replace("/content", "Weiter Unit-Tests implementieren").build().apply(jsonItemBeforeUpdate);
 		// act & assert
 		super.putResourceId(ItemResourceTest.realItemID, jsonItemBeforeUpdate);
@@ -172,7 +173,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/search").queryParam("title", "Tests ertellen").request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
+		final var res = invocationBuilder.get();
 
 		// assert
 		//@formatter:off
@@ -184,9 +185,9 @@ public class ItemResourceTest extends AbstractResourceTest
 				);
 		//@formatter:on
 
-		final String jsonString = res.readEntity(String.class);
+		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final JsonObject jsonItem = this.getJsonObjectFromString(jsonString);
+		final var jsonItem = this.getJsonObjectFromString(jsonString);
 		assertThat(jsonItem).isNotNull();
 
 	}
@@ -198,9 +199,9 @@ public class ItemResourceTest extends AbstractResourceTest
 	{
 		// prepare: get object id from "posted" user from previous test
 		invocationBuilder = target.path("/search").queryParam("title", "Tests ertellen").request(MediaType.APPLICATION_JSON);
-		final Response resSearch = invocationBuilder.get();
-		final JsonObject resObj = this.createFromString(resSearch.readEntity(String.class));
-		final String objId = resObj.getString(field_id);
+		final var resSearch = invocationBuilder.get();
+		final var resObj = this.createFromString(resSearch.readEntity(String.class));
+		final var objId = resObj.getString(field_id);
 
 		// act
 		super.deleteResourceIdWithExistingResource(objId);
@@ -219,7 +220,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	private JsonObject createNewItem(final String title, final String content, final String projectId, String creatorId)
 	{
 		//@formatter:off
-		final JsonObject result = Json.createObjectBuilder()
+		final var result = Json.createObjectBuilder()
 				.add(field_title, title)
 				.add(field_content, content)
 				.add(field_project, projectId)
