@@ -10,14 +10,12 @@ import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,7 +42,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.options();
+		final var res = invocationBuilder.options();
 
 		// assert
 		//@formatter:off
@@ -63,7 +61,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.head();
+		final var res = invocationBuilder.head();
 
 		// assert
 		//@formatter:off
@@ -81,7 +79,7 @@ abstract class AbstractResourceTest
 
 		// act
 		invocationBuilder = target.queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
+		final var res = invocationBuilder.delete();
 
 		/// assert
 		//@formatter:off
@@ -92,13 +90,13 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void postResource(JsonObject jsonResource, String baseURL)
+	void postResourceOk(JsonObject jsonResource, String baseURL)
 	{
 		// prepare: in konkreter Testklasse
 
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.post(Entity.json(jsonResource.toString()));
+		final var res = invocationBuilder.post(Entity.json(jsonResource.toString()));
 
 		// assert
 		//@formatter:off
@@ -112,7 +110,7 @@ abstract class AbstractResourceTest
 		// "<http://localhost:8080/user_mgmt/rest/users/cfb1be3b-da31-4f09-8aae-27b0f92707e1>;
 		// rel="self";
 		// type="application/json"
-		final String link = res.getHeaderString("link");
+		final var link = res.getHeaderString("link");
 
 		//@formatter:off
 		assertAll("Verify link",
@@ -125,11 +123,30 @@ abstract class AbstractResourceTest
 
 	}
 
+	void postResourceFail(JsonObject jsonResource, String baseURL)
+	{
+		// prepare: in konkreter Testklasse
+
+		// act
+		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
+		final var res = invocationBuilder.post(Entity.json(jsonResource.toString()));
+
+		// assert
+		//@formatter:off
+		assertAll("Result of 'post",
+				() -> assertThat(res).isNotNull(),
+				() -> assertThat(res.getStatus()).isEqualTo(400),
+				() -> assertThat(!res.getHeaderString("reason").isEmpty())
+				);
+		//@formatter:on
+
+	}
+
 	JsonObject getResource()
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
+		final var res = invocationBuilder.get();
 
 		// assert
 		//@formatter:off
@@ -141,12 +158,12 @@ abstract class AbstractResourceTest
 				);
 		//@formatter:on
 
-		final String jsonString = res.readEntity(String.class);
+		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final JsonArray jsonArray = this.getJsonArrrayFromString(jsonString);
+		final var jsonArray = this.getJsonArrrayFromString(jsonString);
 		assertThat(jsonArray).isNotNull();
 		assertThat(jsonArray.size()).isGreaterThan(0);
-		final JsonObject jsonResource = jsonArray.getJsonObject(0);
+		final var jsonResource = jsonArray.getJsonObject(0);
 		assertThat(jsonResource).isNotNull();
 
 		return jsonResource;
@@ -157,7 +174,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.options();
+		final var res = invocationBuilder.options();
 
 		// assert
 		//@formatter:off
@@ -178,7 +195,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.head();
+		final var res = invocationBuilder.head();
 
 		// assert
 		//@formatter:off
@@ -195,7 +212,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
+		final var res = invocationBuilder.get();
 
 		// assert
 		//@formatter:off
@@ -207,9 +224,9 @@ abstract class AbstractResourceTest
 				);
 		//@formatter:on
 
-		final String jsonString = res.readEntity(String.class);
+		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final JsonObject jsonResource = this.getJsonObjectFromString(jsonString);
+		final var jsonResource = this.getJsonObjectFromString(jsonString);
 		assertThat(jsonResource).isNotNull();
 
 		return jsonResource;
@@ -219,7 +236,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.put(Entity.json(jsonResourceBeforeUpdate.toString()));
+		final var res = invocationBuilder.put(Entity.json(jsonResourceBeforeUpdate.toString()));
 
 		// assert
 		// @formatter:off
@@ -234,7 +251,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", objId).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
+		final var res = invocationBuilder.delete();
 
 		// assert
 		//@formatter:off
@@ -249,7 +266,7 @@ abstract class AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", UUID.randomUUID().toString()).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.delete();
+		final var res = invocationBuilder.delete();
 
 		// assert
 		//@formatter:off
@@ -264,24 +281,24 @@ abstract class AbstractResourceTest
 
 	protected JsonArray getJsonArrrayFromString(final String jsonString)
 	{
-		final JsonReader jsonReader = Json.createReader(new StringReader(jsonString));
-		final JsonArray result = jsonReader.readArray();
+		final var jsonReader = Json.createReader(new StringReader(jsonString));
+		final var result = jsonReader.readArray();
 		return result;
 	}
 
 	protected JsonObject getJsonObjectFromString(final String jsonString)
 	{
-		final JsonReader jsonReader = Json.createReader(new StringReader(jsonString));
-		final JsonObject result = jsonReader.readObject();
+		final var jsonReader = Json.createReader(new StringReader(jsonString));
+		final var result = jsonReader.readObject();
 		return result;
 	}
 
 	protected JsonObject getResourceById(final String objid)
 	{
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", objid).request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
-		final String jsonString = res.readEntity(String.class);
-		final JsonObject jsonObj = this.getJsonObjectFromString(jsonString);
+		final var res = invocationBuilder.get();
+		final var jsonString = res.readEntity(String.class);
+		final var jsonObj = this.getJsonObjectFromString(jsonString);
 
 		return jsonObj;
 
@@ -289,8 +306,8 @@ abstract class AbstractResourceTest
 
 	protected JsonObject createFromString(final String jsonString)
 	{
-		final JsonReader jsonReader = Json.createReader(new StringReader(jsonString));
-		final JsonObject result = jsonReader.readObject();
+		final var jsonReader = Json.createReader(new StringReader(jsonString));
+		final var result = jsonReader.readObject();
 		return result;
 	}
 

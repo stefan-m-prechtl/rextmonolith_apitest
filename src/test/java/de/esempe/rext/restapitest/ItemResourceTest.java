@@ -7,9 +7,7 @@ import java.util.UUID;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonPatchBuilder;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +39,6 @@ public class ItemResourceTest extends AbstractResourceTest
 
 	}
 
-	@Test
 	@Order(10)
 	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL)
 	// HTTP OPTION ist idempotent --> Test wiederholen
@@ -51,7 +48,6 @@ public class ItemResourceTest extends AbstractResourceTest
 		super.optionResource();
 	}
 
-	@Test
 	@Order(20)
 	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL)
 	// HTTP HEAD ist idempotent --> Test wiederholen
@@ -80,10 +76,9 @@ public class ItemResourceTest extends AbstractResourceTest
 		final var jsonItem = this.createNewItem("Tests ertellen", "Weiter Unit-Tests schreiben", projectId, creatorId);
 
 		// act
-		super.postResource(jsonItem, baseURL);
+		super.postResourceOk(jsonItem, baseURL);
 	}
 
-	@Test
 	@Order(40)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL)
 	// HTTP GET ist idempotent --> Test wiederholen
@@ -106,7 +101,6 @@ public class ItemResourceTest extends AbstractResourceTest
 		ItemResourceTest.realItemID = jsonItem.getString(field_id);
 	}
 
-	@Test
 	@Order(50)
 	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL + "/id")
 	// HTTP OPTION ist idempotent --> Test wiederholen
@@ -117,7 +111,6 @@ public class ItemResourceTest extends AbstractResourceTest
 
 	}
 
-	@Test
 	@Order(60)
 	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL + "/id")
 	// HTTP HEAD ist idempotent --> Test wiederholen
@@ -127,7 +120,6 @@ public class ItemResourceTest extends AbstractResourceTest
 		super.headResourceId(ItemResourceTest.realItemID);
 	}
 
-	@Test
 	@Order(70)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/id")
 	// HTTP GET ist idempotent --> Test wiederholen
@@ -148,7 +140,6 @@ public class ItemResourceTest extends AbstractResourceTest
 
 	}
 
-	@Test
 	@Order(80)
 	@DisplayName("Befehl 'HTTP PUT' für: " + baseURL + "/id")
 	// HTTP PUT ist idempotent --> Test wiederholen
@@ -164,7 +155,6 @@ public class ItemResourceTest extends AbstractResourceTest
 
 	}
 
-	@Test
 	@Order(90)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/search")
 	// HTTP GET ist idempotent --> Test wiederholen

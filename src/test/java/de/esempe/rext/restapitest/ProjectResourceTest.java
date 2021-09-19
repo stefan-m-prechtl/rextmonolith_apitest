@@ -7,9 +7,7 @@ import java.util.UUID;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonPatchBuilder;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +37,6 @@ public class ProjectResourceTest extends AbstractResourceTest
 		target = client.target(baseURL);
 	}
 
-	@Test
 	@Order(10)
 	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL)
 	// HTTP OPTION ist idempotent --> Test wiederholen
@@ -49,7 +46,6 @@ public class ProjectResourceTest extends AbstractResourceTest
 		super.optionResource();
 	}
 
-	@Test
 	@Order(20)
 	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL)
 	// HTTP HEAD ist idempotent --> Test wiederholen
@@ -73,20 +69,19 @@ public class ProjectResourceTest extends AbstractResourceTest
 	void postProject()
 	{
 		// prepare
-		final JsonObject jsonProject = this.createNewProject("TST", "Testprojekt 1");
+		final var jsonProject = this.createNewProject("TST", "Testprojekt 1");
 
 		// act
-		super.postResource(jsonProject, baseURL);
+		super.postResourceOk(jsonProject, baseURL);
 	}
 
-	@Test
 	@Order(40)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL)
 	// HTTP GET ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getProjects()
 	{
-		final JsonObject jsonProject = super.getResource();
+		final var jsonProject = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -100,7 +95,6 @@ public class ProjectResourceTest extends AbstractResourceTest
 		ProjectResourceTest.realProjectID = jsonProject.getString(field_id);
 	}
 
-	@Test
 	@Order(50)
 	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL + "/id")
 	// HTTP OPTION ist idempotent --> Test wiederholen
@@ -110,7 +104,6 @@ public class ProjectResourceTest extends AbstractResourceTest
 		super.optionResourceId(ProjectResourceTest.realProjectID);
 	}
 
-	@Test
 	@Order(60)
 	@DisplayName("Befehl 'HTTP HEAD' für: " + baseURL + "/id")
 	// HTTP HEAD ist idempotent --> Test wiederholen
@@ -120,14 +113,13 @@ public class ProjectResourceTest extends AbstractResourceTest
 		super.headResourceId(ProjectResourceTest.realProjectID);
 	}
 
-	@Test
 	@Order(70)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/id")
 	// HTTP GET ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getProjectsId()
 	{
-		final JsonObject jsonProject = super.getResourceId(ProjectResourceTest.realProjectID);
+		final var jsonProject = super.getResourceId(ProjectResourceTest.realProjectID);
 
 		//@formatter:off
 		assertAll("Verify content",
@@ -139,7 +131,6 @@ public class ProjectResourceTest extends AbstractResourceTest
 
 	}
 
-	@Test
 	@Order(80)
 	@DisplayName("Befehl 'HTTP PUT' für: " + baseURL + "/id")
 	// HTTP PUT ist idempotent --> Test wiederholen
@@ -147,15 +138,13 @@ public class ProjectResourceTest extends AbstractResourceTest
 	void putProjectsId()
 	{
 		// prepare
-		JsonObject jsonProjectBeforeUpdate = this.getResourceById(ProjectResourceTest.realProjectID);
-		final JsonPatchBuilder builder = Json.createPatchBuilder();
+		var jsonProjectBeforeUpdate = this.getResourceById(ProjectResourceTest.realProjectID);
+		final var builder = Json.createPatchBuilder();
 		jsonProjectBeforeUpdate = builder.replace("/description", "Testprojekt ABC").build().apply(jsonProjectBeforeUpdate);
 		// act & assert
 		super.putResourceId(ProjectResourceTest.realProjectID, jsonProjectBeforeUpdate);
-
 	}
 
-	@Test
 	@Order(90)
 	@DisplayName("Befehl 'HTTP GET' für: " + baseURL + "/search")
 	// HTTP GET ist idempotent --> Test wiederholen
@@ -164,7 +153,7 @@ public class ProjectResourceTest extends AbstractResourceTest
 	{
 		// act
 		invocationBuilder = target.path("/search").queryParam("name", "TST").request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
+		final var res = invocationBuilder.get();
 
 		// assert
 		//@formatter:off
@@ -176,9 +165,9 @@ public class ProjectResourceTest extends AbstractResourceTest
 				);
 		//@formatter:on
 
-		final String jsonString = res.readEntity(String.class);
+		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final JsonObject jsonProject = this.getJsonObjectFromString(jsonString);
+		final var jsonProject = this.getJsonObjectFromString(jsonString);
 		assertThat(jsonProject).isNotNull();
 
 	}
@@ -190,9 +179,9 @@ public class ProjectResourceTest extends AbstractResourceTest
 	{
 		// prepare: get object id from "posted" user from previous test
 		invocationBuilder = target.path("/search").queryParam("name", "TST").request(MediaType.APPLICATION_JSON);
-		final Response resSearch = invocationBuilder.get();
-		final JsonObject resObj = this.createFromString(resSearch.readEntity(String.class));
-		final String objId = resObj.getString("projectid");
+		final var resSearch = invocationBuilder.get();
+		final var resObj = this.createFromString(resSearch.readEntity(String.class));
+		final var objId = resObj.getString("projectid");
 
 		// act
 		super.deleteResourceIdWithExistingResource(objId);
@@ -208,10 +197,10 @@ public class ProjectResourceTest extends AbstractResourceTest
 
 	private JsonObject createNewProject(final String name, final String description)
 	{
-		final String objId = UUID.randomUUID().toString();
+		final var objId = UUID.randomUUID().toString();
 
 		//@formatter:off
-		final JsonObject result = Json.createObjectBuilder()
+		final var result = Json.createObjectBuilder()
 				//.add(field_id, user.getObjid().toString())
 				.add(field_name, name)
 				.add(field_description, description)
