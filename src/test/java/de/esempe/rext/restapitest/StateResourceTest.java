@@ -15,19 +15,18 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-@DisplayName("REST-API Test für User-Resource")
+@DisplayName("REST-API Test für Status-Resource")
 @TestMethodOrder(OrderAnnotation.class)
-class UserResourceTest extends AbstractResourceTest
+public class StateResourceTest extends AbstractResourceTest
 {
-	final static String field_id = "userid";
-	final static String field_login = "userlogin";
-	final static String field_firstname = "firstname";
-	final static String field_lastname = "lastname";
+	final static String field_id = "stateid";
+	final static String field_name = "name";
+	final static String field_description = "description";
 
-	final static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
+	final static String baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/status";
 
-	// Echte Objekt-ID vom GET-Abruf - wird für weitere Aufrufe benötigt
-	static String realEntityID;
+	// Echte Objekt-ID GET-Abruf - wird für weitere Aufrufe benötigt
+	static String realStateID;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception
@@ -67,7 +66,7 @@ class UserResourceTest extends AbstractResourceTest
 	void postOk()
 	{
 		// prepare
-		final var jsonUser = this.createEntity("EMU", "Eva", "Mustermann");
+		final var jsonUser = this.createEntity("NEU", "Beschreibung für Neu");
 
 		// act
 		super.postResourceOk(jsonUser, baseURL);
@@ -79,7 +78,7 @@ class UserResourceTest extends AbstractResourceTest
 	void postFail()
 	{
 		// prepare
-		final var jsonUser = this.createFromString("{}"); // this.createNewUser("ZULANGER_LOGIN", "Eva", "Mustermann");
+		final var jsonUser = this.createFromString("{}");
 
 		// act
 		super.postResourceFail(jsonUser, baseURL);
@@ -96,14 +95,13 @@ class UserResourceTest extends AbstractResourceTest
 		//@formatter:off
 		assertAll("Verify content",
 				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_login)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_firstname)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_lastname)).isTrue()
+				() -> assertThat(jsonUser.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonUser.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
-		// echte User-Id für nachfolgende Test intern vermerken
-		UserResourceTest.realEntityID = jsonUser.getString(field_id);
+		// echte State-Id für nachfolgende Test intern vermerken
+		StateResourceTest.realStateID = jsonUser.getString(field_id);
 	}
 
 	@Order(50)
@@ -112,8 +110,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void optionWithId()
 	{
-		super.optionResourceId(UserResourceTest.realEntityID);
-
+		super.optionResourceId(StateResourceTest.realStateID);
 	}
 
 	@Order(60)
@@ -122,7 +119,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void headWithId()
 	{
-		super.headResourceId(UserResourceTest.realEntityID);
+		super.headResourceId(StateResourceTest.realStateID);
 	}
 
 	@Order(70)
@@ -131,14 +128,13 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getWithId()
 	{
-		final var jsonUser = super.getResourceId(UserResourceTest.realEntityID);
+		final var jsonUser = super.getResourceId(StateResourceTest.realStateID);
 
 		//@formatter:off
 		assertAll("Verify content",
 				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_login)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_firstname)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_lastname)).isTrue()
+				() -> assertThat(jsonUser.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonUser.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
@@ -151,12 +147,11 @@ class UserResourceTest extends AbstractResourceTest
 	void put()
 	{
 		// prepare
-		var jsonUserBeforeUpdate = this.getResourceById(UserResourceTest.realEntityID);
+		var jsonStateBeforeUpdate = this.getResourceById(StateResourceTest.realStateID);
 		final var builder = Json.createPatchBuilder();
-		jsonUserBeforeUpdate = builder.replace("/firstname", "Etienne").build().apply(jsonUserBeforeUpdate);
+		jsonStateBeforeUpdate = builder.replace("/description", "Neu2Bearbeitung").build().apply(jsonStateBeforeUpdate);
 		// act & assert
-		super.putResourceId(UserResourceTest.realEntityID, jsonUserBeforeUpdate);
-
+		super.putResourceId(StateResourceTest.realStateID, jsonStateBeforeUpdate);
 	}
 
 	@Order(90)
@@ -166,7 +161,7 @@ class UserResourceTest extends AbstractResourceTest
 	void getBySearch()
 	{
 		// act
-		invocationBuilder = target.path("/search").queryParam("login", "EMU").request(MediaType.APPLICATION_JSON);
+		invocationBuilder = target.path("/search").queryParam("name", "Neu").request(MediaType.APPLICATION_JSON);
 		final var res = invocationBuilder.get();
 
 		// assert
@@ -181,37 +176,35 @@ class UserResourceTest extends AbstractResourceTest
 
 		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final var jsonUser = this.getJsonObjectFromString(jsonString);
-		assertThat(jsonUser).isNotNull();
-
+		final var jsonState = this.getJsonObjectFromString(jsonString);
+		assertThat(jsonState).isNotNull();
 	}
 
 	@Test
 	@Order(100)
 	@DisplayName("Befehl 'HTTP DELETE' für: " + baseURL + "/id")
-	void deleteWithExistingEntity()
+	void deleteExistingEnity()
 	{
 		// act
-		super.deleteResourceIdWithExistingResource(UserResourceTest.realEntityID);
+		super.deleteResourceIdWithExistingResource(StateResourceTest.realStateID);
 	}
 
 	@Test
 	@Order(110)
 	@DisplayName("Befehl 'HTTP DELETE' für: " + baseURL + "/id")
-	void deleteWithNonExistingEntity()
+	void deleteNonExistingEntity()
 	{
 		super.deleteResourceIdWithNonExistingResource();
 	}
 
 	// ****************** Helper-Methoden *******************************
-
-	private JsonObject createEntity(final String login, final String firstname, final String lastname)
+	private JsonObject createEntity(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
-				.add(field_login, login)
-				.add(field_firstname, firstname)
-				.add(field_lastname, lastname)
+				//.add(field_id, user.getObjid().toString())
+				.add(field_name, name)
+				.add(field_description, description)
 				.build();
 		//@formatter:on
 		return result;

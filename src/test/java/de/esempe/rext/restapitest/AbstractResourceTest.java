@@ -283,6 +283,7 @@ abstract class AbstractResourceTest
 	{
 		final var jsonReader = Json.createReader(new StringReader(jsonString));
 		final var result = jsonReader.readArray();
+
 		return result;
 	}
 
@@ -301,13 +302,13 @@ abstract class AbstractResourceTest
 		final var jsonObj = this.getJsonObjectFromString(jsonString);
 
 		return jsonObj;
-
 	}
 
 	protected JsonObject createFromString(final String jsonString)
 	{
 		final var jsonReader = Json.createReader(new StringReader(jsonString));
 		final var result = jsonReader.readObject();
+
 		return result;
 	}
 

@@ -26,10 +26,12 @@ public class ItemResourceTest extends AbstractResourceTest
 	final static String field_content = "content";
 	final static String field_project = "projektobjid";
 	final static String field_creator = "creatorobjid";
+	final static String field_priority = "priority";
 
 	final static String baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
 
-	// Echte ItemID vom ersten Item aus GET-Abruf - wird für weitere Aufrufe benötigt
+	// Echte ItemID vom ersten Item aus GET-Abruf - wird für weitere Aufrufe
+	// benötigt
 	static String realItemID;
 
 	@BeforeAll
@@ -205,7 +207,8 @@ public class ItemResourceTest extends AbstractResourceTest
 		super.deleteResourceIdWithNonExistingResource();
 	}
 
-	// ****************** Helper-Methoden **********************************************
+	// ****************** Helper-Methoden
+	// **********************************************
 
 	private JsonObject createNewItem(final String title, final String content, final String projectId, String creatorId)
 	{
@@ -215,6 +218,20 @@ public class ItemResourceTest extends AbstractResourceTest
 				.add(field_content, content)
 				.add(field_project, projectId)
 				.add(field_creator, creatorId)
+				.add(field_priority, this.createJsonPriorityWithPrio())
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonObject createJsonPriorityWithPrio()
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				//.add("priorityid", objId)
+				.add("name", "Hoch")
+				.add("description", "Sehr wichtig")
+				.add("value", 75)
 				.build();
 		//@formatter:on
 		return result;

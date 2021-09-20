@@ -15,16 +15,16 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-@DisplayName("REST-API Test für User-Resource")
+@DisplayName("REST-API Test für Workflow-Resource")
 @TestMethodOrder(OrderAnnotation.class)
-class UserResourceTest extends AbstractResourceTest
+public class WorkflowResourceTest extends AbstractResourceTest
 {
-	final static String field_id = "userid";
-	final static String field_login = "userlogin";
-	final static String field_firstname = "firstname";
-	final static String field_lastname = "lastname";
+	final static String field_id = "workflowid";
+	final static String field_name = "name";
+	final static String field_description = "description";
+	final static String field_firststate_id = "firststateid";
 
-	final static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
+	final static String baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/workflows";
 
 	// Echte Objekt-ID vom GET-Abruf - wird für weitere Aufrufe benötigt
 	static String realEntityID;
@@ -67,10 +67,10 @@ class UserResourceTest extends AbstractResourceTest
 	void postOk()
 	{
 		// prepare
-		final var jsonUser = this.createEntity("EMU", "Eva", "Mustermann");
+		final var jsonWorkflow = this.createEntity("Demo-WF", "Beschreibung für Demo-Workflow");
 
 		// act
-		super.postResourceOk(jsonUser, baseURL);
+		super.postResourceOk(jsonWorkflow, baseURL);
 	}
 
 	@Test
@@ -79,10 +79,9 @@ class UserResourceTest extends AbstractResourceTest
 	void postFail()
 	{
 		// prepare
-		final var jsonUser = this.createFromString("{}"); // this.createNewUser("ZULANGER_LOGIN", "Eva", "Mustermann");
-
+		final var jsonWorkflow = this.createFromString("{}");
 		// act
-		super.postResourceFail(jsonUser, baseURL);
+		super.postResourceFail(jsonWorkflow, baseURL);
 	}
 
 	@Order(40)
@@ -91,19 +90,18 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void get()
 	{
-		final var jsonUser = super.getResource();
+		final var jsonWorkflow = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
-				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_login)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_firstname)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_lastname)).isTrue()
+				() -> assertThat(jsonWorkflow.containsKey(field_id)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
-		// echte User-Id für nachfolgende Test intern vermerken
-		UserResourceTest.realEntityID = jsonUser.getString(field_id);
+		// echte Workflow-Id für nachfolgende Test intern vermerken
+		WorkflowResourceTest.realEntityID = jsonWorkflow.getString(field_id);
 	}
 
 	@Order(50)
@@ -112,7 +110,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void optionWithId()
 	{
-		super.optionResourceId(UserResourceTest.realEntityID);
+		super.optionResourceId(WorkflowResourceTest.realEntityID);
 
 	}
 
@@ -122,7 +120,7 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void headWithId()
 	{
-		super.headResourceId(UserResourceTest.realEntityID);
+		super.headResourceId(WorkflowResourceTest.realEntityID);
 	}
 
 	@Order(70)
@@ -131,14 +129,13 @@ class UserResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getWithId()
 	{
-		final var jsonUser = super.getResourceId(UserResourceTest.realEntityID);
+		final var jsonWorkflow = super.getResourceId(WorkflowResourceTest.realEntityID);
 
 		//@formatter:off
 		assertAll("Verify content",
-				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_login)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_firstname)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_lastname)).isTrue()
+				() -> assertThat(jsonWorkflow.containsKey(field_id)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
@@ -151,11 +148,11 @@ class UserResourceTest extends AbstractResourceTest
 	void put()
 	{
 		// prepare
-		var jsonUserBeforeUpdate = this.getResourceById(UserResourceTest.realEntityID);
+		var jsonWorkflowBeforeUpdate = this.getResourceById(WorkflowResourceTest.realEntityID);
 		final var builder = Json.createPatchBuilder();
-		jsonUserBeforeUpdate = builder.replace("/firstname", "Etienne").build().apply(jsonUserBeforeUpdate);
+		jsonWorkflowBeforeUpdate = builder.replace("/description", "Doku für Workflow").build().apply(jsonWorkflowBeforeUpdate);
 		// act & assert
-		super.putResourceId(UserResourceTest.realEntityID, jsonUserBeforeUpdate);
+		super.putResourceId(WorkflowResourceTest.realEntityID, jsonWorkflowBeforeUpdate);
 
 	}
 
@@ -166,7 +163,7 @@ class UserResourceTest extends AbstractResourceTest
 	void getBySearch()
 	{
 		// act
-		invocationBuilder = target.path("/search").queryParam("login", "EMU").request(MediaType.APPLICATION_JSON);
+		invocationBuilder = target.path("/search").queryParam("name", "Demo-WF").request(MediaType.APPLICATION_JSON);
 		final var res = invocationBuilder.get();
 
 		// assert
@@ -181,8 +178,8 @@ class UserResourceTest extends AbstractResourceTest
 
 		final var jsonString = res.readEntity(String.class);
 		assertThat(jsonString).isNotBlank();
-		final var jsonUser = this.getJsonObjectFromString(jsonString);
-		assertThat(jsonUser).isNotNull();
+		final var jsonWorkflow = this.getJsonObjectFromString(jsonString);
+		assertThat(jsonWorkflow).isNotNull();
 
 	}
 
@@ -192,7 +189,7 @@ class UserResourceTest extends AbstractResourceTest
 	void deleteWithExistingEntity()
 	{
 		// act
-		super.deleteResourceIdWithExistingResource(UserResourceTest.realEntityID);
+		super.deleteResourceIdWithExistingResource(WorkflowResourceTest.realEntityID);
 	}
 
 	@Test
@@ -205,13 +202,13 @@ class UserResourceTest extends AbstractResourceTest
 
 	// ****************** Helper-Methoden *******************************
 
-	private JsonObject createEntity(final String login, final String firstname, final String lastname)
+	private JsonObject createEntity(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
-				.add(field_login, login)
-				.add(field_firstname, firstname)
-				.add(field_lastname, lastname)
+				.add(field_name, name)
+				.add(field_description, description)
+				.add(field_firststate_id, "")
 				.build();
 		//@formatter:on
 		return result;
