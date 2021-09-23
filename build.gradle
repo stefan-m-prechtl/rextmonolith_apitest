@@ -12,7 +12,8 @@ repositories {
 }
 
 ext {
-	junitVersion = '5.7.0'
+	junitVersion = '5.8.1'
+	junitSuiteVersion = '1.8.1'
 	jerseyVersion = '2.27'
 	jsonVersion = '1.1.4'	
 	assertjVersion = '3.12.2'
@@ -24,8 +25,9 @@ dependencies {
 
 
 	// JUnit5-Testing
-	testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
+	testImplementation "org.junit.platform:junit-platform-suite:${junitSuiteVersion}"
+    
 	// Erweiterung: siehe http://joel-costigliola.github.io/assertj/assertj-core-quick-start.html
 	testImplementation group: 'org.assertj', name: 'assertj-core', version: "${assertjVersion}"
 	
@@ -42,5 +44,16 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+    	// Normale Tests nicht ausführen, nur die Testsuite
+    	excludeEngines 'junit-jupiter'
+    }
+    
+    // show standard out and standard error of the test JVM(s) on the console
+  	testLogging.showStandardStreams = true
+  	// listen to events in the test execution lifecycle
+    beforeTest { 
+    	//descriptor -> logger.lifecycle("Running test: " + descriptor.getClassName() + ":" + descriptor.getName())
+    	descriptor -> logger.lifecycle("Running test: " + descriptor)
+  	}
 }

@@ -9,7 +9,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("Smoketest für User-Resource")
+@DisplayName("Rauchtest für User-Resource")
+@TestClassOrder(1)
 class PingResourceTest extends AbstractResourceTest
 {
 	static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";

@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 @DisplayName("REST-API Test für Item-Resource")
+@TestClassOrder(40)
 @TestMethodOrder(OrderAnnotation.class)
+//@Disabled
 public class ItemResourceTest extends AbstractResourceTest
 {
 	final static String field_id = "itemid";

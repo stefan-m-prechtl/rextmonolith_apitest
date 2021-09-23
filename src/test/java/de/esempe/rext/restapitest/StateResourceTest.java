@@ -17,6 +17,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 @DisplayName("REST-API Test für Status-Resource")
 @TestMethodOrder(OrderAnnotation.class)
+@TestClassOrder(30)
 public class StateResourceTest extends AbstractResourceTest
 {
 	final static String field_id = "stateid";

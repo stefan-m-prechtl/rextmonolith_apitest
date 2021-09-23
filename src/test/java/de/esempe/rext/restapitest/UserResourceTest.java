@@ -12,10 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 @DisplayName("REST-API Test für User-Resource")
+@TestClassOrder(10)
 @TestMethodOrder(OrderAnnotation.class)
 class UserResourceTest extends AbstractResourceTest
 {
@@ -39,6 +41,7 @@ class UserResourceTest extends AbstractResourceTest
 	@DisplayName("Befehl 'HTTP OPTION' für: " + baseURL)
 	// HTTP OPTION ist idempotent --> Test wiederholen
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
+	@Tag("integrationTest")
 	void option()
 	{
 		super.optionResource();

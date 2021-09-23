@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 @DisplayName("REST-API Test für Workflow-Resource")
+@TestClassOrder(31)
 @TestMethodOrder(OrderAnnotation.class)
 public class WorkflowResourceTest extends AbstractResourceTest
 {

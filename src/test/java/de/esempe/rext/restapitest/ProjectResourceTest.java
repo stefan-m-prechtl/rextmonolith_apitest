@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 @DisplayName("REST-API Test für Project-Resource")
+@TestClassOrder(20)
 @TestMethodOrder(OrderAnnotation.class)
 public class ProjectResourceTest extends AbstractResourceTest
 {
