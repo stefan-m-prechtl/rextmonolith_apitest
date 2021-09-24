@@ -1,4 +1,4 @@
-package de.esempe.rext.restapitest;
+package de.esempe.rext.restapitest.usermgmt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,6 +8,9 @@ import javax.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import de.esempe.rext.restapitest.AbstractResourceTest;
+import de.esempe.rext.restapitest.extensions.TestClassOrder;
 
 @DisplayName("Rauchtest für User-Resource")
 @TestClassOrder(1)

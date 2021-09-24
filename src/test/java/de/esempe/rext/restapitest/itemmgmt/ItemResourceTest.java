@@ -1,4 +1,4 @@
-package de.esempe.rext.restapitest;
+package de.esempe.rext.restapitest.itemmgmt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -17,6 +17,9 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import de.esempe.rext.restapitest.AbstractResourceTest;
+import de.esempe.rext.restapitest.extensions.TestClassOrder;
+
 @DisplayName("REST-API Test für Item-Resource")
 @TestClassOrder(40)
 @TestMethodOrder(OrderAnnotation.class)
@@ -32,15 +35,13 @@ public class ItemResourceTest extends AbstractResourceTest
 
 	final static String baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
 
-	// Echte ItemID vom ersten Item aus GET-Abruf - wird für weitere Aufrufe
-	// benötigt
+	// Echte ItemID vom ersten Item aus GET-Abruf - wird für weitere Aufrufe benötigt
 	static String realItemID;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception
 	{
 		target = client.target(baseURL);
-
 	}
 
 	@Order(10)

@@ -20,7 +20,7 @@ import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
-abstract class AbstractResourceTest
+public abstract class AbstractResourceTest
 {
 	protected static Client client = null;
 	protected static WebTarget target = null;
@@ -38,7 +38,7 @@ abstract class AbstractResourceTest
 		client.close();
 	}
 
-	void optionResource()
+	protected void optionResource()
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
@@ -57,7 +57,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void headResource()
+	protected void headResource()
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
@@ -74,7 +74,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void deleteAllResource()
+	protected void deleteAllResource()
 	{
 
 		// act
@@ -90,7 +90,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void postResourceOk(JsonObject jsonResource, String baseURL)
+	protected void postResourceOk(JsonObject jsonResource, String baseURL)
 	{
 		// prepare: in konkreter Testklasse
 
@@ -123,7 +123,7 @@ abstract class AbstractResourceTest
 
 	}
 
-	void postResourceFail(JsonObject jsonResource, String baseURL)
+	protected void postResourceFail(JsonObject jsonResource, String baseURL)
 	{
 		// prepare: in konkreter Testklasse
 
@@ -142,7 +142,7 @@ abstract class AbstractResourceTest
 
 	}
 
-	JsonObject getResource()
+	protected JsonObject getResource()
 	{
 		// act
 		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
@@ -170,7 +170,7 @@ abstract class AbstractResourceTest
 
 	}
 
-	void optionResourceId(String resourceID)
+	protected void optionResourceId(String resourceID)
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
@@ -191,7 +191,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void headResourceId(String resourceID)
+	protected void headResourceId(String resourceID)
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
@@ -208,7 +208,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	JsonObject getResourceId(String resourceID)
+	protected JsonObject getResourceId(String resourceID)
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
@@ -232,7 +232,7 @@ abstract class AbstractResourceTest
 		return jsonResource;
 	}
 
-	void putResourceId(String resourceID, JsonObject jsonResourceBeforeUpdate)
+	protected void putResourceId(String resourceID, JsonObject jsonResourceBeforeUpdate)
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
@@ -247,7 +247,7 @@ abstract class AbstractResourceTest
 		// @formatter:on
 	}
 
-	void deleteResourceIdWithExistingResource(String objId)
+	protected void deleteResourceIdWithExistingResource(String objId)
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", objId).request(MediaType.APPLICATION_JSON);
@@ -262,7 +262,7 @@ abstract class AbstractResourceTest
 		//@formatter:on
 	}
 
-	void deleteResourceIdWithNonExistingResource()
+	protected void deleteResourceIdWithNonExistingResource()
 	{
 		// act
 		invocationBuilder = target.path("/{id}").resolveTemplate("id", UUID.randomUUID().toString()).request(MediaType.APPLICATION_JSON);
