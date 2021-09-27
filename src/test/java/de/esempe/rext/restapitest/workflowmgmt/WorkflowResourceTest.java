@@ -100,7 +100,8 @@ public class WorkflowResourceTest extends AbstractResourceTest
 		assertAll("Verify content",
 				() -> assertThat(jsonWorkflow.containsKey(field_id)).isTrue(),
 				() -> assertThat(jsonWorkflow.containsKey(field_name)).isTrue(),
-				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue()
+				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_firststate_id)).isTrue()
 				);
 		//@formatter:on
 
@@ -139,7 +140,8 @@ public class WorkflowResourceTest extends AbstractResourceTest
 		assertAll("Verify content",
 				() -> assertThat(jsonWorkflow.containsKey(field_id)).isTrue(),
 				() -> assertThat(jsonWorkflow.containsKey(field_name)).isTrue(),
-				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue()
+				() -> assertThat(jsonWorkflow.containsKey(field_description)).isTrue(),
+				() -> assertThat(jsonWorkflow.containsKey(field_firststate_id)).isTrue()
 				);
 		//@formatter:on
 
@@ -206,7 +208,7 @@ public class WorkflowResourceTest extends AbstractResourceTest
 
 	// ****************** Helper-Methoden *******************************
 
-	private JsonObject createEntity(final String name, final String description)
+	static JsonObject createEntity(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()

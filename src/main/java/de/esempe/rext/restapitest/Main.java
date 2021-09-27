@@ -1,5 +1,6 @@
 package de.esempe.rext.restapitest;
 
+import java.io.StringReader;
 import java.util.concurrent.TimeUnit;
 
 import javax.json.Json;
@@ -21,13 +22,20 @@ public class Main
 		System.out.println("REST-Daten erzeugt!");
 	}
 
-	//@formatter:off
-	public record PostResult(int status, String objid){}
-	//@formatter:on
+	public record PostResult(int status, String objid)
+	{
+		void validate()
+		{
+			if (this.status() != 204)
+			{
+				throw new IllegalStateException("Status-Code nach POST-Request ungleich 204!");
+			}
+		}
+	}
 
 	public void run()
 	{
-		this.client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.SECONDS).build();
+		this.client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.MINUTES).build();
 
 		// WS-Verfügbarkeit prüfen
 		if (this.ping() != 200)
@@ -36,7 +44,9 @@ public class Main
 		}
 
 		// Alle Daten löschen
+		this.deleteAllTransitions();
 		this.deleteAllStatus();
+		this.deleteAllWorkflows();
 		this.deleteAllItems();
 		this.deleteAllPriorities();
 		this.deleteAllProjects();
@@ -67,11 +77,18 @@ public class Main
 		final var status02 = this.postState("InBearbeitung", "In Bearbeitung");
 		final var status03 = this.postState("Abgeschlossen", "Abgeschlossen");
 
+		// Workflow anlegen
+		final var workflow = this.postWorkflow("Basisworkflow", "Beschreibung für 'Basisworkflow'");
+
+		final var tranisition01 = this.postTransition(workflow, status01, status02, "Erstellt -> In Bearbeitung");
+
+		// Transitionen anlegen
+		// final var transition01 = this.postTransition(status01, status02, "Erstellt -> In Bearbeitung");
+
 		this.client.close();
 	}
 
 	// #### Ping
-
 	private int ping()
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
@@ -83,9 +100,19 @@ public class Main
 	}
 
 	// ********** Löschen **********
+	int deleteAllTransitions()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/transitions");
+	}
+
 	int deleteAllStatus()
 	{
 		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/status");
+	}
+
+	int deleteAllWorkflows()
+	{
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/workflows");
 	}
 
 	int deleteAllItems()
@@ -130,7 +157,9 @@ public class Main
 		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
 		final var status = res.getStatus();
 
-		return new PostResult(status, objid);
+		var result = new PostResult(status, objid);
+		result.validate();
+		return result;
 
 	}
 
@@ -192,7 +221,6 @@ public class Main
 		final var status = res.getStatus();
 
 		return new PostResult(status, objid);
-
 	}
 
 	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio)
@@ -225,7 +253,6 @@ public class Main
 		final var status = res.getStatus();
 
 		return new PostResult(status, objid);
-
 	}
 
 	private JsonObject createJsonPriority(final String name, String description, final int value)
@@ -268,7 +295,6 @@ public class Main
 		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
 
 		return new PostResult(status, objid);
-
 	}
 
 	private JsonObject createJsonStatus(final String name, String description)
@@ -282,6 +308,86 @@ public class Main
 		return result;
 	}
 
+	// ********** Workflow **********
+	private PostResult postWorkflow(final String name, final String description)
+	{
+		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/workflows";
+		final var invocationBuilder = this.createBuilder(baseURL);
+
+		final var jsonObj = this.createJsonWorkflow(name, description);
+		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
+
+		final var status = res.getStatus();
+		final var selfLink = res.getLink("self");
+		final var uri = selfLink.getUri().getPath();
+		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
+
+		return new PostResult(status, objid);
+	}
+
+	private JsonObject createJsonWorkflow(final String name, String description)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("name", name)
+				.add("description", description)
+				.add("firststateid", "")
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	// ********** Transition **********
+	private PostResult postTransition(PostResult workflow, PostResult statusFrom, PostResult statusTo, String description)
+	{
+		var workflowObjId = workflow.objid();
+
+		var jsonStatusFrom = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status", statusFrom.objid());
+		var jsonStatusTo = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status", statusTo.objid());
+
+		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/transitions";
+		final var invocationBuilder = this.createBuilder(baseURL);
+
+		final var jsonObj = this.createJsonTransition(workflowObjId, jsonStatusFrom, jsonStatusTo, description);
+		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
+
+		final var status = res.getStatus();
+		final var selfLink = res.getLink("self");
+		final var uri = selfLink.getUri().getPath();
+		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
+
+		return new PostResult(status, objid);
+
+	}
+
+	private JsonObject createJsonTransition(String workflowObjId, String jsonStatusFrom, String jsonStatusTo, String description)
+	{
+
+		var jsonReader = Json.createReader(new StringReader(jsonStatusFrom));
+		var statusFrom = jsonReader.readObject();
+		jsonReader = Json.createReader(new StringReader(jsonStatusTo));
+		var statusTo = jsonReader.readObject();
+
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+						.add("workflowobjid", workflowObjId)
+						.add("fromstate", statusFrom)
+						.add("tostate", statusTo)
+						.add("description", description)
+						.build();
+		//@formatter:on
+
+		// {
+		// "transitionid":"80112b73-eb90-4c04-b952-6f0f80b8d575",
+		// "workflowobjid":"73977e3e-dfab-4ac5-be2c-cf17cc3e7e64",
+		// "fromstate":{"stateid":"06470263-2444-4e4a-8473-0396872ca1e8","name":"Neu","description":""},
+		// "tostate":{"stateid":"ac3e21e5-e433-4694-9090-197aea6d39ec","name":"InBearbeitung","description":""},
+		// "description":"Beschreibung für 'Transition'"
+		// }
+
+		return result;
+	}
+
 	// ********** Helper **********
 
 	private Invocation.Builder createBuilder(String baseURL)
@@ -291,6 +397,21 @@ public class Main
 
 		return result;
 
+	}
+
+	private String getResource(String baseURL, String objid)
+	{
+		var result = "";
+		var targetURL = baseURL + "/" + objid;
+		final var invocationBuilder = this.createBuilder(targetURL);
+		final var res = invocationBuilder.get();
+
+		if (200 == res.getStatus())
+		{
+			result = res.readEntity(String.class);
+		}
+
+		return result;
 	}
 
 }
