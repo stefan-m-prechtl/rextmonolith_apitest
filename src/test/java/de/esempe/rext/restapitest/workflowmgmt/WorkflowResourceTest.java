@@ -10,17 +10,16 @@ import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-
-import de.esempe.rext.restapitest.AbstractResourceTest;
-import de.esempe.rext.restapitest.extensions.TestClassOrder;
-
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import de.esempe.rext.restapitest.AbstractResourceTest;
+import de.esempe.rext.restapitest.extensions.TestClassOrder;
+
 @DisplayName("REST-API Test für Workflow-Resource")
-@TestClassOrder(31)
+@TestClassOrder(32)
 @TestMethodOrder(OrderAnnotation.class)
 public class WorkflowResourceTest extends AbstractResourceTest
 {

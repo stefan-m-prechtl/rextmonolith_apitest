@@ -10,14 +10,13 @@ import javax.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-
-import de.esempe.rext.restapitest.AbstractResourceTest;
-import de.esempe.rext.restapitest.extensions.TestClassOrder;
-
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+
+import de.esempe.rext.restapitest.AbstractResourceTest;
+import de.esempe.rext.restapitest.extensions.TestClassOrder;
 
 @DisplayName("REST-API Test für Status-Resource")
 @TestMethodOrder(OrderAnnotation.class)
@@ -71,10 +70,10 @@ public class StateResourceTest extends AbstractResourceTest
 	void postOk()
 	{
 		// prepare
-		final var jsonUser = this.createEntity("NEU", "Beschreibung für Neu");
+		final var jsonState = createEntity("NEU", "Beschreibung für Neu");
 
 		// act
-		super.postResourceOk(jsonUser, baseURL);
+		super.postResourceOk(jsonState, baseURL);
 	}
 
 	@Test
@@ -83,10 +82,10 @@ public class StateResourceTest extends AbstractResourceTest
 	void postFail()
 	{
 		// prepare
-		final var jsonUser = this.createFromString("{}");
+		final var jsonState = this.createFromString("{}");
 
 		// act
-		super.postResourceFail(jsonUser, baseURL);
+		super.postResourceFail(jsonState, baseURL);
 	}
 
 	@Order(40)
@@ -95,18 +94,18 @@ public class StateResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void get()
 	{
-		final var jsonUser = super.getResource();
+		final var jsonState = super.getResource();
 
 		//@formatter:off
 		assertAll("Verify content",
-				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_name)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_description)).isTrue()
+				() -> assertThat(jsonState.containsKey(field_id)).isTrue(),
+				() -> assertThat(jsonState.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonState.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
 		// echte State-Id für nachfolgende Test intern vermerken
-		StateResourceTest.realStateID = jsonUser.getString(field_id);
+		StateResourceTest.realStateID = jsonState.getString(field_id);
 	}
 
 	@Order(50)
@@ -133,13 +132,13 @@ public class StateResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getWithId()
 	{
-		final var jsonUser = super.getResourceId(StateResourceTest.realStateID);
+		final var jsonState = super.getResourceId(StateResourceTest.realStateID);
 
 		//@formatter:off
 		assertAll("Verify content",
-				() -> assertThat(jsonUser.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_name)).isTrue(),
-				() -> assertThat(jsonUser.containsKey(field_description)).isTrue()
+				() -> assertThat(jsonState.containsKey(field_id)).isTrue(),
+				() -> assertThat(jsonState.containsKey(field_name)).isTrue(),
+				() -> assertThat(jsonState.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
@@ -203,7 +202,7 @@ public class StateResourceTest extends AbstractResourceTest
 	}
 
 	// ****************** Helper-Methoden *******************************
-	private JsonObject createEntity(final String name, final String description)
+	static JsonObject createEntity(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
