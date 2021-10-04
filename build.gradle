@@ -23,7 +23,6 @@ dependencies {
 
 	testImplementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
 
-
 	// JUnit5-Testing
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
 	testImplementation "org.junit.platform:junit-platform-suite:${junitSuiteVersion}"
