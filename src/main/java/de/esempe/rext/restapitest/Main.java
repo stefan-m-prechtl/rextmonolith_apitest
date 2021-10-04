@@ -1,9 +1,13 @@
 package de.esempe.rext.restapitest;
 
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -66,10 +70,13 @@ public class Main
 		final var prio02 = this.postPriority("Niedrig", "Unwichtig!", 25);
 		final var jsonPrio02 = this.createJsonPriorityWithPrio(prio02.objid, "Niedrig", "Unwichtig!", 25);
 
+		// TaggedValue anlegen
+		final JsonArray taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
+
 		// Items anlegen
-		final var item01 = this.postItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1", jsonPrio01);
-		final var item02 = this.postItem(idproj01.objid, iduser02.objid, "Item 2", "Content of 2", jsonPrio02);
-		final var item03 = this.postItem(idproj01.objid, iduser02.objid, "Item 3", "Content of 3", jsonPrio01);
+		final var item01 = this.postItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1", jsonPrio01, taggedValues);
+		final var item02 = this.postItem(idproj01.objid, iduser02.objid, "Item 2", "Content of 2", jsonPrio02, taggedValues);
+		final var item03 = this.postItem(idproj01.objid, iduser02.objid, "Item 3", "Content of 3", jsonPrio01, taggedValues);
 
 		// *** Workflow ***
 		// Status anlegen
@@ -206,13 +213,13 @@ public class Main
 		return result;
 	}
 
-	// ********** Items **********
-	private PostResult postItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio)
+	// ********** Items, TaggedValues **********
+	private PostResult postItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio, JsonArray jsonTaggedValues)
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
 		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final var jsonItem = this.createJsonItem(projectId, creatorId, title, content, jsonPrio);
+		final var jsonItem = this.createJsonItem(projectId, creatorId, title, content, jsonPrio, jsonTaggedValues);
 		final var res = invocationBuilder.post(Entity.json(jsonItem.toString()));
 
 		final var selfLink = res.getLink("self");
@@ -223,9 +230,8 @@ public class Main
 		return new PostResult(status, objid);
 	}
 
-	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio)
+	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio, JsonArray jsonTaggedValues)
 	{
-
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
 				.add("title", title)
@@ -233,6 +239,25 @@ public class Main
 				.add("projektobjid", projectId)
 				.add("creatorobjid", creatorId)
 				.add("priority", jsonPrio)
+				.add("taggedvalues", jsonTaggedValues)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonArray createJsonTaggedValues(List<String> values)
+	{
+		var builder = Json.createArrayBuilder();
+		values.forEach(v -> builder.add(this.createJsonTaggedValue(v)));
+		return builder.build();
+	}
+
+	private JsonObject createJsonTaggedValue(String value)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("valueid", UUID.randomUUID().toString())
+				.add("value", value)
 				.build();
 		//@formatter:on
 		return result;
