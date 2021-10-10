@@ -29,7 +29,8 @@ public abstract class AbstractResourceTest
 	@BeforeAll
 	static void setUpBeforeBaseClass() throws Exception
 	{
-		client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.SECONDS).build();
+		// client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.SECONDS).build();
+		client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.MINUTES).build();
 	}
 
 	@AfterAll
