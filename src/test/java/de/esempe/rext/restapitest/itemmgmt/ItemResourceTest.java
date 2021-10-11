@@ -3,9 +3,12 @@ package de.esempe.rext.restapitest.itemmgmt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.core.MediaType;
 
@@ -32,6 +35,7 @@ public class ItemResourceTest extends AbstractResourceTest
 	final static String field_project = "projektobjid";
 	final static String field_creator = "creatorobjid";
 	final static String field_priority = "priority";
+	final static String field_taggedvalues = "taggedvalues";
 
 	final static String baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
 
@@ -78,7 +82,9 @@ public class ItemResourceTest extends AbstractResourceTest
 		// prepare
 		final var projectId = UUID.randomUUID().toString();
 		final var creatorId = UUID.randomUUID().toString();
-		final var jsonItem = this.createNewItem("Tests ertellen", "Weiter Unit-Tests schreiben", projectId, creatorId);
+		final JsonArray taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
+		final JsonObject priority = this.createJsonPriority("Hoch", "Beschreibung für Hoch", 75);
+		final var jsonItem = this.createNewItem("Tests ertellen", "Weiter Unit-Tests schreiben", projectId, creatorId, priority, taggedValues);
 
 		// act
 		super.postResourceOk(jsonItem, baseURL);
@@ -210,10 +216,54 @@ public class ItemResourceTest extends AbstractResourceTest
 		super.deleteResourceIdWithNonExistingResource();
 	}
 
-	// ****************** Helper-Methoden
-	// **********************************************
+	// ****************** Helper-Methoden **********************************************
 
-	private JsonObject createNewItem(final String title, final String content, final String projectId, String creatorId)
+	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio, JsonArray jsonTaggedValues)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("title", title)
+				.add("content", content)
+				.add("projektobjid", projectId)
+				.add("creatorobjid", creatorId)
+				.add("priority", jsonPrio)
+				.add("taggedvalues", jsonTaggedValues)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonArray createJsonTaggedValues(List<String> values)
+	{
+		var builder = Json.createArrayBuilder();
+		values.forEach(v -> builder.add(this.createJsonTaggedValue(v)));
+		return builder.build();
+	}
+
+	private JsonObject createJsonTaggedValue(String value)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("valueid", UUID.randomUUID().toString())
+				.add("value", value)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonObject createJsonPriority(final String name, String description, final int value)
+	{
+		//@formatter:off
+		final var result = Json.createObjectBuilder()
+				.add("name", name)
+				.add("description", description)
+				.add("value", value)
+				.build();
+		//@formatter:on
+		return result;
+	}
+
+	private JsonObject createNewItem(final String title, final String content, final String projectId, String creatorId, JsonObject jsonPrio, JsonArray jsonTaggedValues)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -221,7 +271,8 @@ public class ItemResourceTest extends AbstractResourceTest
 				.add(field_content, content)
 				.add(field_project, projectId)
 				.add(field_creator, creatorId)
-				.add(field_priority, this.createJsonPriorityWithPrio())
+				.add(field_priority, jsonPrio)
+				.add(field_taggedvalues, jsonTaggedValues)
 				.build();
 		//@formatter:on
 		return result;
