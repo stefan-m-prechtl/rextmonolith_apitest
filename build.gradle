@@ -21,6 +21,10 @@ ext {
 
 dependencies {
 
+	// https://mvnrepository.com/artifact/org.codehaus.groovy/groovy-jsr223
+	implementation group: 'org.codehaus.groovy', name: 'groovy-jsr223', version: '3.0.9'
+
+
 	testImplementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
 
 	// JUnit5-Testing
