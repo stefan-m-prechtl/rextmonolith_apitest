@@ -98,9 +98,9 @@ public class Main
 		final var tranisition01 = this.postTransition(workflow, status01, status02, "bearbeiten (Erstellt -> In Bearbeitung)");
 		final var tranisition02 = this.postTransition(workflow, status02, status02, "überarbeiten (In Bearbeitung -> In Bearbeitung)");
 		final var tranisition03 = this.postTransition(workflow, status02, status03, "abschliessen (In Bearbeitung -> Abgeschlossen)");
-		final var tranisition04 = this.postTransition(workflow, status01, status04, "zurückstellen(Erstelt --> Zurückgestellt)");
-		final var tranisition05 = this.postTransition(workflow, status02, status04, "abschliessen (In Bearbeitung -> Zurückgestellt)");
-		final var tranisition06 = this.postTransition(workflow, status04, status02, "bearbieten (Zurückgestellt -> In Bearbeitung)");
+		final var tranisition04 = this.postTransition(workflow, status01, status04, "zurückstellen (Erstellt -> Zurückgestellt)");
+		final var tranisition05 = this.postTransition(workflow, status02, status04, "zurückstellen (In Bearbeitung -> Zurückgestellt)");
+		final var tranisition06 = this.postTransition(workflow, status04, status02, "bearbeiten (Zurückgestellt -> In Bearbeitung)");
 
 		this.client.close();
 	}
