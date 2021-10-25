@@ -87,10 +87,9 @@ public class Main
 		// Workflow anlegen
 		final var workflow = this.postWorkflow("Basisworkflow", "Beschreibung für 'Basisworkflow'");
 
-		final var tranisition01 = this.postTransition(workflow, status01, status02, "Erstellt -> In Bearbeitung");
-
 		// Transitionen anlegen
-		// final var transition01 = this.postTransition(status01, status02, "Erstellt -> In Bearbeitung");
+		final var tranisition01 = this.postTransition(workflow, status01, status02, "Erstellt -> In Bearbeitung");
+		final var tranisition02 = this.postTransition(workflow, status02, status03, "In Bearbeitung -> Abgeschlossen");
 
 		this.client.close();
 	}
