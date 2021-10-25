@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+//import javax.script.ScriptEngineManager;
+//import javax.script.ScriptException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -19,8 +21,12 @@ public class Main
 {
 	private Client client;
 
-	public static void main(String[] args)
+	public static void main(String[] args) // throws ScriptException
 	{
+		/*
+		 * var factory = new ScriptEngineManager(); var engine = factory.getEngineByName("groovy"); engine.put("first", "HELLO"); engine.put("second", "Grooy World!");
+		 * var result = (String) engine.eval("first.toLowerCase() + ' ' + second.toUpperCase()"); System.out.println(result);
+		 */
 		final var theApp = new Main();
 		theApp.run();
 		System.out.println("REST-Daten erzeugt!");
@@ -71,7 +77,7 @@ public class Main
 		final var jsonPrio02 = this.createJsonPriorityWithPrio(prio02.objid, "Niedrig", "Unwichtig!", 25);
 
 		// TaggedValue anlegen
-		final JsonArray taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
+		final var taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
 
 		// Items anlegen
 		final var item01 = this.postItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1", jsonPrio01, taggedValues);
@@ -83,13 +89,18 @@ public class Main
 		final var status01 = this.postState("Erstellt", "Erstellt");
 		final var status02 = this.postState("InBearbeitung", "In Bearbeitung");
 		final var status03 = this.postState("Abgeschlossen", "Abgeschlossen");
+		final var status04 = this.postState("Zurückgestellt", "Zurückgestellt");
 
 		// Workflow anlegen
 		final var workflow = this.postWorkflow("Basisworkflow", "Beschreibung für 'Basisworkflow'");
 
 		// Transitionen anlegen
-		final var tranisition01 = this.postTransition(workflow, status01, status02, "Erstellt -> In Bearbeitung");
-		final var tranisition02 = this.postTransition(workflow, status02, status03, "In Bearbeitung -> Abgeschlossen");
+		final var tranisition01 = this.postTransition(workflow, status01, status02, "bearbeiten (Erstellt -> In Bearbeitung)");
+		final var tranisition02 = this.postTransition(workflow, status02, status02, "überarbeiten (In Bearbeitung -> In Bearbeitung)");
+		final var tranisition03 = this.postTransition(workflow, status02, status03, "abschliessen (In Bearbeitung -> Abgeschlossen)");
+		final var tranisition04 = this.postTransition(workflow, status01, status04, "zurückstellen(Erstelt --> Zurückgestellt)");
+		final var tranisition05 = this.postTransition(workflow, status02, status04, "abschliessen (In Bearbeitung -> Zurückgestellt)");
+		final var tranisition06 = this.postTransition(workflow, status04, status02, "bearbieten (Zurückgestellt -> In Bearbeitung)");
 
 		this.client.close();
 	}
