@@ -3,23 +3,22 @@ package de.esempe.rext.restapitest.projectmgmt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import java.awt.PageAttributes.MediaType;
 import java.util.UUID;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.ws.rs.core.MediaType;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-
-import de.esempe.rext.restapitest.AbstractResourceTest;
-import de.esempe.rext.restapitest.extensions.TestClassOrder;
-
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+
+import de.esempe.rext.restapitest.AbstractResourceTest;
+import de.esempe.rext.restapitest.extensions.TestClassOrder;
 
 @DisplayName("REST-API Test für Project-Resource")
 @TestClassOrder(20)
@@ -36,10 +35,9 @@ public class ProjectResourceTest extends AbstractResourceTest
 	// Echte Project-ID vom der ersten Project aus GET-Abruf - wird für weitere Aufrufe benötigt
 	static String realProjectID;
 
-	@BeforeAll
-	static void setUpBeforeClass() throws Exception
+	public ProjectResourceTest()
 	{
-		target = client.target(baseURL);
+		super(baseURL);
 	}
 
 	@Order(10)
@@ -48,7 +46,7 @@ public class ProjectResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void optionProjects()
 	{
-		super.optionResource();
+		super.optionResource("");
 	}
 
 	@Order(20)
@@ -57,7 +55,7 @@ public class ProjectResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void headProjects()
 	{
-		super.headResource();
+		super.headResource("");
 	}
 
 	@Test
@@ -65,7 +63,7 @@ public class ProjectResourceTest extends AbstractResourceTest
 	@DisplayName("Befehl 'HTTP DELETE ' für: " + baseURL + "?flag=all")
 	void deleteAllProjects()
 	{
-		super.deleteAllResource();
+		super.deleteAllResource("");
 	}
 
 	@Test
@@ -77,7 +75,7 @@ public class ProjectResourceTest extends AbstractResourceTest
 		final var jsonProject = this.createNewProject("TST", "Testprojekt 1");
 
 		// act
-		super.postResourceOk(jsonProject, baseURL);
+		super.postResourceOk(baseURL, jsonProject.toString());
 	}
 
 	@Order(40)
@@ -86,18 +84,19 @@ public class ProjectResourceTest extends AbstractResourceTest
 	@RepeatedTest(value = 2, name = "{currentRepetition}/{totalRepetitions}")
 	void getProjects()
 	{
-		final var jsonProject = super.getResource();
+		final JsonArray projects = super.getResource("");
+		final JsonObject project = (JsonObject) projects.get(0);
 
 		//@formatter:off
 		assertAll("Verify content",
-				() -> assertThat(jsonProject.containsKey(field_id)).isTrue(),
-				() -> assertThat(jsonProject.containsKey(field_name)).isTrue(),
-				() -> assertThat(jsonProject.containsKey(field_description)).isTrue()
+				() -> assertThat(project.containsKey(field_id)).isTrue(),
+				() -> assertThat(project.containsKey(field_name)).isTrue(),
+				() -> assertThat(project.containsKey(field_description)).isTrue()
 				);
 		//@formatter:on
 
 		// echte Project-Id für nachfolgende Test intern vermerken
-		ProjectResourceTest.realProjectID = jsonProject.getString(field_id);
+		ProjectResourceTest.realProjectID = project.getString(field_id);
 	}
 
 	@Order(50)

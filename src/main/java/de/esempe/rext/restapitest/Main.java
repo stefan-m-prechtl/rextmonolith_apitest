@@ -1,34 +1,43 @@
 package de.esempe.rext.restapitest;
 
+import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-//import javax.script.ScriptEngineManager;
-//import javax.script.ScriptException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.MediaType;
+import javax.json.bind.Jsonb;
 
 public class Main
 {
-	private Client client;
+	protected HttpClient client;
+	protected Jsonb jsonb;
 
-	public static void main(String[] args) // throws ScriptException
+	public static void main(final String[] args) // throws ScriptException
 	{
 		/*
 		 * var factory = new ScriptEngineManager(); var engine = factory.getEngineByName("groovy"); engine.put("first", "HELLO"); engine.put("second", "Grooy World!");
 		 * var result = (String) engine.eval("first.toLowerCase() + ' ' + second.toUpperCase()"); System.out.println(result);
 		 */
 		final var theApp = new Main();
-		theApp.run();
+		try
+		{
+			theApp.run();
+		}
+		catch (IOException | InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("REST-Daten erzeugt!");
 	}
 
@@ -43,9 +52,9 @@ public class Main
 		}
 	}
 
-	public void run()
+	public void run() throws IOException, InterruptedException
 	{
-		this.client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.MINUTES).build();
+		this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).connectTimeout(Duration.ofSeconds(3)).build();
 
 		// WS-Verfügbarkeit prüfen
 		if (this.ping() != 200)
@@ -77,7 +86,8 @@ public class Main
 		final var jsonPrio02 = this.createJsonPriorityWithPrio(prio02.objid, "Niedrig", "Unwichtig!", 25);
 
 		// TaggedValue anlegen
-		final var taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
+		// final var taggedValues = this.createJsonTaggedValues(Arrays.asList("TEST", "REST-TEST"));
+		final var taggedValues = this.createJsonTaggedValues(Arrays.asList("REST-TEST"));
 
 		// Items anlegen
 		final var item01 = this.postItem(idproj01.objid, iduser01.objid, "Item 1", "Content of 1", jsonPrio01, taggedValues);
@@ -95,89 +105,99 @@ public class Main
 		final var workflow = this.postWorkflow("Basisworkflow", "Beschreibung für 'Basisworkflow'");
 
 		// Transitionen anlegen
-		final var tranisition01 = this.postTransition(workflow, status01, status02, "bearbeiten (Erstellt -> In Bearbeitung)");
-		final var tranisition02 = this.postTransition(workflow, status02, status02, "überarbeiten (In Bearbeitung -> In Bearbeitung)");
-		final var tranisition03 = this.postTransition(workflow, status02, status03, "abschliessen (In Bearbeitung -> Abgeschlossen)");
-		final var tranisition04 = this.postTransition(workflow, status01, status04, "zurückstellen (Erstellt -> Zurückgestellt)");
-		final var tranisition05 = this.postTransition(workflow, status02, status04, "zurückstellen (In Bearbeitung -> Zurückgestellt)");
-		final var tranisition06 = this.postTransition(workflow, status04, status02, "bearbeiten (Zurückgestellt -> In Bearbeitung)");
+//		final var tranisition01 = this.postTransition(workflow, status01, status02, "bearbeiten (Erstellt -> In Bearbeitung)");
+//		final var tranisition02 = this.postTransition(workflow, status02, status02, "überarbeiten (In Bearbeitung -> In Bearbeitung)");
+//		final var tranisition03 = this.postTransition(workflow, status02, status03, "abschliessen (In Bearbeitung -> Abgeschlossen)");
+//		final var tranisition04 = this.postTransition(workflow, status01, status04, "zurückstellen (Erstellt -> Zurückgestellt)");
+//		final var tranisition05 = this.postTransition(workflow, status02, status04, "zurückstellen (In Bearbeitung -> Zurückgestellt)");
+//		final var tranisition06 = this.postTransition(workflow, status04, status02, "bearbeiten (Zurückgestellt -> In Bearbeitung)");
 
-		this.client.close();
 	}
 
 	// #### Ping
-	private int ping()
+	private int ping() throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
-		final var invocationBuilder = this.createBuilder(baseURL);
-		final var res = invocationBuilder.get();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL)).header("Content-Type", "application/json").GET().build();
+		final var response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
 
-		return res.getStatus();
+		return response.statusCode();
 
 	}
 
 	// ********** Löschen **********
-	int deleteAllTransitions()
+	int deleteAllTransitions() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/transitions");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/transitions?flag=all");
 	}
 
-	int deleteAllStatus()
+	int deleteAllStatus() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/status");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/status?flag=all");
 	}
 
-	int deleteAllWorkflows()
+	int deleteAllWorkflows() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/workflows");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/workflowmgmt/workflows?flag=all");
 	}
 
-	int deleteAllItems()
+	int deleteAllItems() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/items");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/items?flag=all");
 	}
 
-	int deleteAllPriorities()
+	int deleteAllPriorities() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/priorities");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/itemmgmt/priorities?flag=all");
 	}
 
-	int deleteAllUsers()
+	int deleteAllUsers() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/usermgmt/users");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/usermgmt/users?flag=all");
 	}
 
-	int deleteAllProjects()
+	int deleteAllProjects() throws IOException, InterruptedException
 	{
-		return this.deleteAllResource("http://localhost:8080/monolith/rext/projectmgmt/projects");
+		return this.deleteAllResource("http://localhost:8080/monolith/rext/projectmgmt/projects?flag=all");
 	}
 
-	int deleteAllResource(String url)
+	int deleteAllResource(final String url) throws IOException, InterruptedException
 	{
-		final var invocationBuilder = this.client.target(url).queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.delete();
-		return res.getStatus();
+		final var request = HttpRequest.newBuilder().uri(URI.create(url)).header("Content-Type", "application/json").DELETE().build();
+		final var response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
+
+		if (response.statusCode() != 204)
+		{
+			throw new IllegalStateException("Status-Code nach DELETE-Request: '" + url + "' ungleich 204!");
+		}
+		return response.statusCode();
 	}
 
 	// ********** Benutzer **********
-
-	private PostResult postUser(String login, String firstname, String lastname)
+	private PostResult postResource(final String url, final JsonObject jsonData) throws IOException, InterruptedException
 	{
-		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
-		final var invocationBuilder = this.createBuilder(baseURL);
 
-		final var jsonUser = this.createJsonUser(login, firstname, lastname);
-		final var res = invocationBuilder.post(Entity.json(jsonUser.toString()));
+		final var request = HttpRequest.newBuilder().uri(URI.create(url)).header("Content-Type", "application/json").POST(BodyPublishers.ofString(jsonData.toString())).build();
+		final var response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
 
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final var status = res.getStatus();
+		final var link = response.headers().firstValue("link").get();
+		final var uri = link.split(";")[0];
+		final var uri2 = uri.substring(1, uri.length() - 1);
+		final var objid = uri2.substring(uri2.lastIndexOf("/") + 1);
 
-		var result = new PostResult(status, objid);
+		final var status = response.statusCode();
+
+		final var result = new PostResult(status, objid);
 		result.validate();
 		return result;
+	}
 
+	private PostResult postUser(final String login, final String firstname, final String lastname) throws IOException, InterruptedException
+	{
+		final var baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
+		final var jsonUser = this.createJsonUser(login, firstname, lastname);
+
+		return this.postResource(baseURL, jsonUser);
 	}
 
 	private JsonObject createJsonUser(final String login, final String firstname, final String lastname)
@@ -185,7 +205,8 @@ public class Main
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
 				//.add(field_id, user.getObjid().toString())
-				.add("userlogin", login)
+				.add("login", login)
+				.add("clearpassword", "muster99")
 				.add("firstname", firstname)
 				.add("lastname", lastname)
 				.build();
@@ -194,21 +215,12 @@ public class Main
 	}
 
 	// ********** Projekte **********
-	private PostResult postProject(String projectname, String description, String userId)
+	private PostResult postProject(final String projectname, final String description, final String userId) throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/projectmgmt/projects";
-		final var invocationBuilder = this.createBuilder(baseURL);
-
 		final var jsonProject = this.createJsonProject(projectname, description, userId);
-		final var res = invocationBuilder.post(Entity.json(jsonProject.toString()));
 
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final var status = res.getStatus();
-
-		return new PostResult(status, objid);
-
+		return this.postResource(baseURL, jsonProject);
 	}
 
 	private JsonObject createJsonProject(final String projectname, final String description, final String userId)
@@ -224,23 +236,19 @@ public class Main
 	}
 
 	// ********** Items, TaggedValues **********
-	private PostResult postItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio, JsonArray jsonTaggedValues)
+	private PostResult postItem(
+			final String projectId, final String creatorId, final String title, final String content, final JsonObject jsonPrio, final JsonArray jsonTaggedValues
+	) throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/itemmgmt/items";
-		final var invocationBuilder = this.createBuilder(baseURL);
-
 		final var jsonItem = this.createJsonItem(projectId, creatorId, title, content, jsonPrio, jsonTaggedValues);
-		final var res = invocationBuilder.post(Entity.json(jsonItem.toString()));
 
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final var status = res.getStatus();
-
-		return new PostResult(status, objid);
+		return this.postResource(baseURL, jsonItem);
 	}
 
-	private JsonObject createJsonItem(final String projectId, final String creatorId, final String title, final String content, JsonObject jsonPrio, JsonArray jsonTaggedValues)
+	private JsonObject createJsonItem(
+			final String projectId, final String creatorId, final String title, final String content, final JsonObject jsonPrio, final JsonArray jsonTaggedValues
+	)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -255,14 +263,14 @@ public class Main
 		return result;
 	}
 
-	private JsonArray createJsonTaggedValues(List<String> values)
+	private JsonArray createJsonTaggedValues(final List<String> values)
 	{
-		var builder = Json.createArrayBuilder();
+		final var builder = Json.createArrayBuilder();
 		values.forEach(v -> builder.add(this.createJsonTaggedValue(v)));
 		return builder.build();
 	}
 
-	private JsonObject createJsonTaggedValue(String value)
+	private JsonObject createJsonTaggedValue(final String value)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -274,23 +282,14 @@ public class Main
 	}
 
 	// ********** Priorities **********
-	private PostResult postPriority(final String name, final String description, int value)
+	private PostResult postPriority(final String name, final String description, final int value) throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/itemmgmt/priorities";
-		final var invocationBuilder = this.createBuilder(baseURL);
-
 		final var jsonObj = this.createJsonPriority(name, description, value);
-		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
-
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-		final var status = res.getStatus();
-
-		return new PostResult(status, objid);
+		return this.postResource(baseURL, jsonObj);
 	}
 
-	private JsonObject createJsonPriority(final String name, String description, final int value)
+	private JsonObject createJsonPriority(final String name, final String description, final int value)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -302,7 +301,7 @@ public class Main
 		return result;
 	}
 
-	private JsonObject createJsonPriorityWithPrio(final String objId, final String name, String description, final int value)
+	private JsonObject createJsonPriorityWithPrio(final String objId, final String name, final String description, final int value)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -316,23 +315,15 @@ public class Main
 	}
 
 	// ********** State **********
-	private PostResult postState(final String name, final String description)
+	private PostResult postState(final String name, final String description) throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/status";
-		final var invocationBuilder = this.createBuilder(baseURL);
+		final var jsonData = this.createJsonStatus(name, description);
 
-		final var jsonObj = this.createJsonStatus(name, description);
-		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
-
-		final var status = res.getStatus();
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-
-		return new PostResult(status, objid);
+		return this.postResource(baseURL, jsonData);
 	}
 
-	private JsonObject createJsonStatus(final String name, String description)
+	private JsonObject createJsonStatus(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -344,23 +335,15 @@ public class Main
 	}
 
 	// ********** Workflow **********
-	private PostResult postWorkflow(final String name, final String description)
+	private PostResult postWorkflow(final String name, final String description) throws IOException, InterruptedException
 	{
 		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/workflows";
-		final var invocationBuilder = this.createBuilder(baseURL);
+		final var jsonData = this.createJsonWorkflow(name, description);
 
-		final var jsonObj = this.createJsonWorkflow(name, description);
-		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
-
-		final var status = res.getStatus();
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-
-		return new PostResult(status, objid);
+		return this.postResource(baseURL, jsonData);
 	}
 
-	private JsonObject createJsonWorkflow(final String name, String description)
+	private JsonObject createJsonWorkflow(final String name, final String description)
 	{
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -373,35 +356,38 @@ public class Main
 	}
 
 	// ********** Transition **********
-	private PostResult postTransition(PostResult workflow, PostResult statusFrom, PostResult statusTo, String description)
+	private PostResult postTransition(final PostResult workflow, final PostResult statusFrom, final PostResult statusTo, final String description)
+			throws IOException, InterruptedException
 	{
-		var workflowObjId = workflow.objid();
+		final var workflowObjId = workflow.objid();
 
-		var jsonStatusFrom = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status", statusFrom.objid());
-		var jsonStatusTo = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status", statusTo.objid());
+		final var jsonStatusFrom = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status" + statusFrom.objid());
+		final var jsonStatusTo = this.getResource("http://localhost:8080/monolith/rext/workflowmgmt/status" + statusTo.objid());
 
 		final var baseURL = "http://localhost:8080/monolith/rext/workflowmgmt/transitions";
-		final var invocationBuilder = this.createBuilder(baseURL);
+		final var jsonData = this.createJsonTransition(workflowObjId, jsonStatusFrom, jsonStatusTo, description);
 
-		final var jsonObj = this.createJsonTransition(workflowObjId, jsonStatusFrom, jsonStatusTo, description);
-		final var res = invocationBuilder.post(Entity.json(jsonObj.toString()));
-
-		final var status = res.getStatus();
-		final var selfLink = res.getLink("self");
-		final var uri = selfLink.getUri().getPath();
-		final var objid = uri.substring(uri.lastIndexOf('/') + 1);
-
-		return new PostResult(status, objid);
+		return this.postResource(baseURL, jsonData);
 
 	}
 
-	private JsonObject createJsonTransition(String workflowObjId, String jsonStatusFrom, String jsonStatusTo, String description)
+	protected String getResource(final String url) throws IOException, InterruptedException
+	{
+
+		final var request = HttpRequest.newBuilder().uri(URI.create(url)).header("Content-Type", "application/json").GET().build();
+		final var response = this.client.send(request, HttpResponse.BodyHandlers.ofString());
+
+		return response.body();
+
+	}
+
+	private JsonObject createJsonTransition(final String workflowObjId, final String jsonStatusFrom, final String jsonStatusTo, final String description)
 	{
 
 		var jsonReader = Json.createReader(new StringReader(jsonStatusFrom));
-		var statusFrom = jsonReader.readObject();
+		final var statusFrom = jsonReader.readObject();
 		jsonReader = Json.createReader(new StringReader(jsonStatusTo));
-		var statusTo = jsonReader.readObject();
+		final var statusTo = jsonReader.readObject();
 
 		//@formatter:off
 		final var result = Json.createObjectBuilder()
@@ -419,32 +405,6 @@ public class Main
 		// "tostate":{"stateid":"ac3e21e5-e433-4694-9090-197aea6d39ec","name":"InBearbeitung","description":""},
 		// "description":"Beschreibung für 'Transition'"
 		// }
-
-		return result;
-	}
-
-	// ********** Helper **********
-
-	private Invocation.Builder createBuilder(String baseURL)
-	{
-		final var target = this.client.target(baseURL);
-		final var result = target.request(MediaType.APPLICATION_JSON);
-
-		return result;
-
-	}
-
-	private String getResource(String baseURL, String objid)
-	{
-		var result = "";
-		var targetURL = baseURL + "/" + objid;
-		final var invocationBuilder = this.createBuilder(targetURL);
-		final var res = invocationBuilder.get();
-
-		if (200 == res.getStatus())
-		{
-			result = res.readEntity(String.class);
-		}
 
 		return result;
 	}

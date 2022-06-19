@@ -3,107 +3,98 @@ package de.esempe.rext.restapitest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import java.io.IOException;
 import java.io.StringReader;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 
 public abstract class AbstractResourceTest
 {
-	protected static Client client = null;
-	protected static WebTarget target = null;
-	protected static Invocation.Builder invocationBuilder = null;
+	protected HttpClient client;
+	protected String baseURL;
 
-	@BeforeAll
-	static void setUpBeforeBaseClass() throws Exception
+	protected AbstractResourceTest(final String baseURL)
 	{
-		// client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.SECONDS).build();
-		client = ClientBuilder.newBuilder().connectTimeout(100, TimeUnit.MILLISECONDS).readTimeout(2, TimeUnit.MINUTES).build();
+		this.baseURL = baseURL;
+		client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).connectTimeout(Duration.ofSeconds(3)).build();
 	}
 
-	@AfterAll
-	static void tearDownAfterClass() throws Exception
-	{
-		client.close();
-	}
-
-	protected void optionResource()
+	protected void optionResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.options();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json")
+				.method("OPTIONS", HttpRequest.BodyPublishers.noBody()).build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'option",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("allow")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("allow")).contains("HEAD"),
-				() -> assertThat(res.getHeaderString("allow")).contains("GET"),
-				() -> assertThat(res.getHeaderString("allow")).contains("OPTIONS")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().firstValue("allow")).isNotEmpty(),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("HEAD"),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("GET"),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("OPTIONS")
 				);
 		//@formatter:on
 	}
 
-	protected void headResource()
+	protected void headResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.head();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json")
+				.method("HEAD", HttpRequest.BodyPublishers.noBody()).build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'head",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().firstValue("content-type")).isNotEmpty(),
+				() -> assertThat(res.headers().firstValue("content-type").get()).contains("application/json")
 				);
 		//@formatter:on
 	}
 
-	protected void deleteAllResource()
+	protected void deleteAllResource(final String pathExtension) throws IOException, InterruptedException
 	{
 
 		// act
-		invocationBuilder = target.queryParam("flag", "all").request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.delete();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").DELETE().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		/// assert
 		//@formatter:off
 		assertAll("Result of 'delete",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
+				() -> assertThat(res.statusCode()).isEqualTo(204)
 				);
 		//@formatter:on
 	}
 
-	protected void postResourceOk(JsonObject jsonResource, String baseURL)
+	protected void postResourceOk(final String pathExtension, final String payload) throws IOException, InterruptedException
 	{
 		// prepare: in konkreter Testklasse
 
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.post(Entity.json(jsonResource.toString()));
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").POST(BodyPublishers.ofString(payload))
+				.build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'post",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
+				() -> assertThat(res.statusCode()).isEqualTo(204)
 				);
 		//@formatter:on
 
@@ -111,11 +102,11 @@ public abstract class AbstractResourceTest
 		// "<http://localhost:8080/user_mgmt/rest/users/cfb1be3b-da31-4f09-8aae-27b0f92707e1>;
 		// rel="self";
 		// type="application/json"
-		final var link = res.getHeaderString("link");
+		final var link = res.headers().allValues("link");
 
 		//@formatter:off
 		assertAll("Verify link",
-				() -> assertThat(link).isNotBlank(),
+				() -> assertThat(link).isNotEmpty(),
 				() -> assertThat(link).contains(baseURL),
 				() -> assertThat(link).contains("rel=\"self\""),
 				() -> assertThat(link).contains("type=\"application/json\"")
@@ -124,156 +115,181 @@ public abstract class AbstractResourceTest
 
 	}
 
-	protected void postResourceFail(JsonObject jsonResource, String baseURL)
+	protected void postResourceFail(final String pathExtension, final String payload) throws IOException, InterruptedException
 	{
 		// prepare: in konkreter Testklasse
 
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.post(Entity.json(jsonResource.toString()));
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").POST(BodyPublishers.ofString(payload))
+				.build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'post",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(400),
-				() -> assertThat(!res.getHeaderString("reason").isEmpty())
+				() -> assertThat(res.statusCode()).isEqualTo(400),
+				() -> assertThat(!res.headers().allValues("reason").isEmpty())
 				);
 		//@formatter:on
 
 	}
 
-	protected JsonObject getResource()
+	protected JsonArray getResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.get();
-
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").GET().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 		// assert
 		//@formatter:off
 		assertAll("Verify meta data",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().allValues("content-type")).isNotEmpty(),
+				() -> assertThat(res.headers().allValues("content-type")).contains("application/json")
 				);
 		//@formatter:on
 
-		final var jsonString = res.readEntity(String.class);
-		assertThat(jsonString).isNotBlank();
-		final var jsonArray = this.getJsonArrrayFromString(jsonString);
-		assertThat(jsonArray).isNotNull();
-		assertThat(jsonArray.size()).isGreaterThan(0);
-		final var jsonResource = jsonArray.getJsonObject(0);
-		assertThat(jsonResource).isNotNull();
+		final var data = res.body();
+		assertThat(data).isNotBlank();
 
-		return jsonResource;
+		final var jsonObj = this.getJsonArrrayFromString(data);
+		assertThat(jsonObj).isNotNull();
+
+		return jsonObj;
 
 	}
 
-	protected void optionResourceId(String resourceID)
+	protected JsonObject getSingleResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.options();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").GET().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
+		// assert
+		//@formatter:off
+		assertAll("Verify meta data",
+				() -> assertThat(res).isNotNull(),
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().allValues("content-type")).isNotEmpty(),
+				() -> assertThat(res.headers().allValues("content-type")).contains("application/json")
+				);
+		//@formatter:on
+
+		final var data = res.body();
+		assertThat(data).isNotBlank();
+
+		final var jsonObj = this.getJsonObjectFromString(data);
+		assertThat(jsonObj).isNotNull();
+
+		return jsonObj;
+
+	}
+
+	protected void optionResourceId(final String pathExtension) throws IOException, InterruptedException
+	{
+		// act
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json")
+				.method("OPTIONS", HttpRequest.BodyPublishers.noBody()).build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'option",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("allow")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("allow")).contains("HEAD"),
-				() -> assertThat(res.getHeaderString("allow")).contains("GET"),
-				() -> assertThat(res.getHeaderString("allow")).contains("PUT"),
-				() -> assertThat(res.getHeaderString("allow")).contains("DELETE"),
-				() -> assertThat(res.getHeaderString("allow")).contains("OPTIONS")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().firstValue("allow")).isNotEmpty(),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("HEAD"),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("GET"),
+				() -> assertThat(res.headers().firstValue("allow")).contains("PUT"),
+				() -> assertThat(res.headers().firstValue("allow")).contains("DELETE"),
+				() -> assertThat(res.headers().firstValue("allow").get()).contains("OPTIONS")
 				);
 		//@formatter:on
 	}
 
-	protected void headResourceId(String resourceID)
+	protected void headResourceId(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.head();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json")
+				.method("HEAD", HttpRequest.BodyPublishers.noBody()).build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'head",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().allValues("content-type")).isNotEmpty(),
+				() -> assertThat(res.headers().firstValue("content-type")).contains("application/json")
 				);
 		//@formatter:on
 	}
 
-	protected JsonObject getResourceId(String resourceID)
+	protected JsonObject getResourceId(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.get();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").GET().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'head",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(200),
-				() -> assertThat(res.getHeaderString("content-type")).isNotBlank(),
-				() -> assertThat(res.getHeaderString("content-type")).contains("application/json")
+				() -> assertThat(res.statusCode()).isEqualTo(200),
+				() -> assertThat(res.headers().allValues("content-type")).isNotEmpty(),
+				() -> assertThat(res.headers().allValues("content-type")).contains("application/json")
 				);
 		//@formatter:on
 
-		final var jsonString = res.readEntity(String.class);
-		assertThat(jsonString).isNotBlank();
-		final var jsonResource = this.getJsonObjectFromString(jsonString);
-		assertThat(jsonResource).isNotNull();
+		final var data = res.body();
+		assertThat(data).isNotBlank();
+		final var jsonObj = this.getJsonObjectFromString(data);
+		assertThat(jsonObj).isNotNull();
 
-		return jsonResource;
+		return jsonObj;
 	}
 
-	protected void putResourceId(String resourceID, JsonObject jsonResourceBeforeUpdate)
+	protected void putResourceId(final String pathExtension, final String payload) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", resourceID).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.put(Entity.json(jsonResourceBeforeUpdate.toString()));
-
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").PUT(BodyPublishers.ofString(payload))
+				.build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 		// assert
 		// @formatter:off
 		assertAll("Result of 'put",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
+				() -> assertThat(res.statusCode()).isEqualTo(204)
 				);
 		// @formatter:on
 	}
 
-	protected void deleteResourceIdWithExistingResource(String objId)
+	protected void deleteResourceIdWithExistingResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", objId).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.delete();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").DELETE().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'delete",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(204)
+				() -> assertThat(res.statusCode()).isEqualTo(204)
 				);
 		//@formatter:on
 	}
 
-	protected void deleteResourceIdWithNonExistingResource()
+	protected void deleteResourceIdWithNonExistingResource(final String pathExtension) throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", UUID.randomUUID().toString()).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.delete();
+		final var request = HttpRequest.newBuilder().uri(URI.create(baseURL + pathExtension)).header("Content-Type", "application/json").DELETE().build();
+		final var res = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 		// assert
 		//@formatter:off
 		assertAll("Result of 'delete",
 				() -> assertThat(res).isNotNull(),
-				() -> assertThat(res.getStatus()).isEqualTo(404)
+				() -> assertThat(res.statusCode()).isEqualTo(404)
 				);
 		//@formatter:on
 	}
@@ -292,24 +308,6 @@ public abstract class AbstractResourceTest
 	{
 		final var jsonReader = Json.createReader(new StringReader(jsonString));
 		final var result = jsonReader.readObject();
-		return result;
-	}
-
-	protected JsonObject getResourceById(final String objid)
-	{
-		invocationBuilder = target.path("/{id}").resolveTemplate("id", objid).request(MediaType.APPLICATION_JSON);
-		final var res = invocationBuilder.get();
-		final var jsonString = res.readEntity(String.class);
-		final var jsonObj = this.getJsonObjectFromString(jsonString);
-
-		return jsonObj;
-	}
-
-	protected JsonObject createFromString(final String jsonString)
-	{
-		final var jsonReader = Json.createReader(new StringReader(jsonString));
-		final var result = jsonReader.readObject();
-
 		return result;
 	}
 

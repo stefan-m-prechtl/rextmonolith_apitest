@@ -1,40 +1,40 @@
 package de.esempe.rext.restapitest.usermgmt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.io.IOException;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.esempe.rext.restapitest.AbstractResourceTest;
 import de.esempe.rext.restapitest.extensions.TestClassOrder;
 
-@DisplayName("Rauchtest für User-Resource")
+@DisplayName("REST-API Ping für User-Resource")
 @TestClassOrder(1)
 class PingResourceTest extends AbstractResourceTest
 {
-	static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/ping";
+	// Basis-URL für Usermanagement
+	final static String urlforUserPing = "http://localhost:8080/monolith/rext/usermgmt/ping";
 
-	@BeforeAll
-	static void setUpBeforeClass() throws Exception
+	public PingResourceTest()
 	{
-		target = client.target(PingResourceTest.baseURL);
+		super(urlforUserPing);
 	}
 
 	@Test
-	@DisplayName("Ping")
-	void ping()
+	@DisplayName("Befehl 'HTTP GET' für: " + urlforUserPing)
+	void ping() throws IOException, InterruptedException
 	{
 		// act
-		invocationBuilder = target.request(MediaType.APPLICATION_JSON);
-		final Response res = invocationBuilder.get();
+		final var jsonObj = super.getSingleResource("");
 
-		// assert
-		assertThat(res).isNotNull();
-		assertThat(res.getStatus()).isEqualTo(200);
+		//@formatter:off
+		assertAll("Verify content",
+				() -> assertThat(jsonObj.containsKey("date")).isTrue(),
+				() -> assertThat(jsonObj.containsKey("time")).isTrue()
+				);
+		//@formatter:on
 	}
-
 }

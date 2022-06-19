@@ -3,8 +3,8 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -12,38 +12,28 @@ repositories {
 }
 
 ext {
-	junitVersion = '5.8.1'
-	junitSuiteVersion = '1.8.1'
-	jerseyVersion = '2.27'
-	jsonVersion = '1.1.4'	
-	assertjVersion = '3.12.2'
+	junitVersion = '5.8.2'
+	assertjVersion = '3.22.0'
 }
 
 dependencies {
 
-	// https://mvnrepository.com/artifact/org.codehaus.groovy/groovy-jsr223
-	implementation group: 'org.codehaus.groovy', name: 'groovy-jsr223', version: '3.0.9'
-
-
-	testImplementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
-
-	// JUnit5-Testing
-    testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
-	testImplementation "org.junit.platform:junit-platform-suite:${junitSuiteVersion}"
+	// JSON-B
+	implementation group: 'javax.json.bind', name: 'javax.json.bind-api', version: '1.0'
+    implementation group: 'org.eclipse', name: 'yasson', version: '1.0.2'
+    implementation  group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
     
-	// Erweiterung: siehe http://joel-costigliola.github.io/assertj/assertj-core-quick-start.html
-	testImplementation group: 'org.assertj', name: 'assertj-core', version: "${assertjVersion}"
-	
-	// REST Client Jersey
-	// ohne Activation: Warnungen!!
-	implementation group: 'javax.activation', name: 'activation', version: '1.1.1'
-	implementation group: 'org.glassfish.jersey.core', name: 'jersey-client', version: "${jerseyVersion}"
-	implementation group: 'org.glassfish', name: 'javax.json', version: "${jsonVersion}"
-	// ohne Injection: Fehler zur Laufzeit!
-	implementation group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: "${jerseyVersion}"
-	
-	implementation group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1'
-	implementation group: 'javax.json', name: 'javax.json-api', version: '1.1'
+    // Json Web Token (JWT)
+	implementation 'com.auth0:java-jwt:3.18.3'
+    
+    // JUnit5-Testing
+	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${junitVersion}"
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "${junitVersion}"
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: "${assertjVersion}"
+    
+    // https://mvnrepository.com/artifact/org.junit.platform/junit-platform-suite-api
+	testImplementation group: 'org.junit.platform', name: 'junit-platform-suite-api', version: '1.8.2'
+    
 }
 
 test {
