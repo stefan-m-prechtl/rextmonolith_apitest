@@ -13,7 +13,6 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -35,11 +34,11 @@ class UserResourceTest extends AbstractResourceTest
 	final static String field_firstname = "firstname";
 	final static String field_lastname = "lastname";
 
-	// Echte Objekt-ID vom GET-Abruf - wird für weitere Aufrufe benötigt
-	static String realEntityID;
-
 	// Basis-URL für Usermanagement
 	final static String baseURL = "http://localhost:8080/monolith/rext/usermgmt/users";
+
+	// Echte Objekt-ID vom GET-Abruf - wird für weitere Aufrufe benötigt
+	static String realEntityID;
 
 	public UserResourceTest()
 	{
@@ -70,13 +69,12 @@ class UserResourceTest extends AbstractResourceTest
 	@DisplayName("Befehl 'HTTP DELETE ' für: " + baseURL + "?flag=all")
 	void deleteAll() throws IOException, InterruptedException
 	{
-		super.deleteAllResource("");
+		super.deleteAllResource("?flag=all");
 	}
 
 	@Test
 	@Order(35)
 	@DisplayName("Befehl 'HTTP POST (ok)' für: " + baseURL)
-	@Disabled
 	void postOk() throws IOException, InterruptedException
 
 	{
